@@ -402,7 +402,15 @@ public:
 
 Error convert_blend_shape_animation_to_skinned_animation(EditorSceneImporterMesh *p_model,
                                Skeleton3D *p_skeleton, AnimationPlayer *p_ap) {
+  // TODO 2021-04-20
+  // - To hard-lock the transformations of bones: in the input fbx files,
+  // create bool attributes for joint nodes (bones) with name "demLock" and
+  // set the value to "true".
 
+  // - To soft-lock skinning weights of vertices: in the input fbx files,
+  // paint per-vertex colors in gray-scale. The closer the color to white,
+  // the more skinning weights of the vertex are preserved.
+  
   for (int32_t surface_i = 0; surface_i < p_model->get_surface_count();
        surface_i++) {
     Array surface_arrays = p_model->get_surface_arrays(surface_i);
