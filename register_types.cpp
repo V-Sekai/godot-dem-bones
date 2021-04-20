@@ -30,8 +30,14 @@
 
 #include "register_types.h"
 #include "scene/resources/surface_tool.h"
+#include "editor/import/scene_importer_mesh.h"
+
+#include "DemBones/DemBonesExt.h"
 
 void register_dem_bones_types() {
+    Ref<EditorSceneImporterMesh> mesh;
+    mesh.instance();
+    convert_blend_shape_animation_to_skinned_animation(mesh.ptr(), nullptr, nullptr);
 }
 
 void unregister_dem_bones_types() {
