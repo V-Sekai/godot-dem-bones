@@ -257,14 +257,10 @@ private:
 				bind.block(4*k, 0, 4, 4*nB)=b;
 			}
 		}
-		
-		b=bind.block(4*s, 0, 4, 4*nB);
-		if (bindUpdate>=1) computeCentroids(s, b);
-	}
-
-    b = bind.block(4 * s, 0, 4, 4 * nB);
-    if (bindUpdate >= 1)
+		b = bind.block(4 * s, 0, 4, 4 * nB);
+    if (bindUpdate >= 1) {
       computeCentroids(s, b);
+    }
   }
 
   /** Root joint
@@ -336,68 +332,69 @@ public:
     if (!p_blends.size()) {
       return p_mesh;
     }
-    ERR_FAIL_NULL_V(p_skeleton, Array());
-    nS = 1;
+//     ERR_FAIL_NULL_V(p_skeleton, Array());
+//     nS = 1;
 
-    PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
-    nV = vertex_arrays.size();
-    u.resize(nS * 3, nV);
-    for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size(); vertex_i++) {
-      const float pos_x = vertex_arrays[vertex_i].x;
-      const float pos_y = vertex_arrays[vertex_i].y;
-      const float pos_z = vertex_arrays[vertex_i].z;
-      v.col(vertex_i).segment<3>((vertex_i)*3) << pos_x, pos_y, pos_z;
+//     PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
+//     nV = vertex_arrays.size();
+//     u.resize(nS * 3, nV);
+//     for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size(); vertex_i++) {
+//       const float pos_x = vertex_arrays[vertex_i].x;
+//       const float pos_y = vertex_arrays[vertex_i].y;
+//       const float pos_z = vertex_arrays[vertex_i].z;
+//       v.col(vertex_i).segment<3>((vertex_i)*3) << pos_x, pos_y, pos_z;
+//     }
+//     // TODO iFire 2021-04-20
+//     // u.block(0, 0, 3, nV) = v;
+//     PackedInt32Array indices = p_mesh[Mesh::ARRAY_INDEX];
+
+//     // Assume triangles
+//     const int indices_in_tri = 3;
+//     fv.resize(indices.size() / indices_in_tri);
+//     for (int32_t index_i = 0; index_i < indices.size(); index_i += 3) {
+//       std::vector<int> polygon_indices;
+//       polygon_indices.resize(indices_in_tri);
+//       polygon_indices[index_i / 3 + 0] = indices[index_i / 3 + 0];
+//       polygon_indices[index_i / 3 + 1] = indices[index_i / 3 + 1];
+//       polygon_indices[index_i / 3 + 2] = indices[index_i / 3 + 2];
+//       fv[index_i / indices_in_tri] = polygon_indices;
+//     }
+
+//     PackedInt32Array bones = p_mesh[Mesh::ARRAY_BONES];
+//     Set<int32_t> bone_set;
+
+//     for (int32_t bones_i = 0; bones_i < bones.size(); bones_i++) {
+//       bone_set.insert(bones[bones_i]);
+//     }
+//     nB = bone_set.size();
+//     nF = 1;
+//     const int iteration_max = 100;
+//     double tolerance = 0.0;
+//     int patience = 3;
+//     DemBonesExt<double, float>::compute();
+//     double prevErr = -1;
+//     int np = 3;
+//     for (int32_t iteration = 0; iteration < iteration_max; iteration++) {
+//       double err = rmse();
+//       print_line("RMSE = " + itos(err));
+//       if ((err < prevErr * (1 + weightEps)) &&
+//           ((prevErr - err) < tolerance * prevErr)) {
+//         np--;
+//         if (np == 0) {
+//           print_line("Convergence is reached!");
+//           return Array();
+//         }
+//       } else {
+
+//         np = patience;
+//       }
+//       prevErr = err;
+//       return Array();
+//     }
+//     return Array();
+      return p_mesh;
     }
-    // TODO iFire 2021-04-20
-    // u.block(0, 0, 3, nV) = v;
-    PackedInt32Array indices = p_mesh[Mesh::ARRAY_INDEX];
-
-    // Assume triangles
-    const int indices_in_tri = 3;
-    fv.resize(indices.size() / indices_in_tri);
-    for (int32_t index_i = 0; index_i < indices.size(); index_i += 3) {
-      std::vector<int> polygon_indices;
-      polygon_indices.resize(indices_in_tri);
-      polygon_indices[index_i / 3 + 0] = indices[index_i / 3 + 0];
-      polygon_indices[index_i / 3 + 1] = indices[index_i / 3 + 1];
-      polygon_indices[index_i / 3 + 2] = indices[index_i / 3 + 2];
-      fv[index_i / indices_in_tri] = polygon_indices;
-    }
-
-    PackedInt32Array bones = p_mesh[Mesh::ARRAY_BONES];
-    Set<int32_t> bone_set;
-
-    for (int32_t bones_i = 0; bones_i < bones.size(); bones_i) {
-      bone_set.insert(bones[bones_i]);
-    }
-    nB = bone_set.size();
-    nF = 1;
-    const int iteration_max = 100;
-    double tolerance = 0.0;
-    int patience = 3;
-    DemBonesExt<double, float>::compute();
-    double prevErr = -1;
-    int np = 3;
-    for (int32_t iteration = 0; iteration < iteration_max; iteration++) {
-      double err = rmse();
-      print_line("RMSE = " + itos(err));
-      if ((err < prevErr * (1 + weightEps)) &&
-          ((prevErr - err) < tolerance * prevErr)) {
-        np--;
-        if (np == 0) {
-          print_line("Convergence is reached!");
-          return Array();
-        }
-      } else {
-
-        np = patience;
-      }
-      prevErr = err;
-      return Array();
-    }
-    return Array();
-  }
-};
+  };
 } // namespace Dem
 
 Error convert_blend_shape_animation_to_skinned_animation(EditorSceneImporterMesh *p_model,
@@ -421,12 +418,12 @@ Error convert_blend_shape_animation_to_skinned_animation(EditorSceneImporterMesh
       Array blend_array =
           p_model->get_surface_blend_shape_arrays(surface_i, blend_i);
     }
-    Dem::DemBonesExt<double, float> bones;
-    NodePath mesh_track;
-    Vector<NodePath> blend_tracks;
-    Vector<NodePath> skeleton_tracks;
-    Ref<Animation> animation;
-    Array bone_mesh = bones.convert(surface_arrays, blend_arrays, p_skeleton, animation, mesh_track, blend_tracks, skeleton_tracks);
+    // NodePath mesh_track;
+    // Vector<NodePath> blend_tracks;
+    // Vector<NodePath> skeleton_tracks;
+    // Ref<Animation> animation;
+    // Dem::DemBonesExt<double, float> bones;
+    // Array bone_mesh = bones.convert(surface_arrays, blend_arrays, p_skeleton, animation, mesh_track, blend_tracks, skeleton_tracks);
   }
   return OK;
 }

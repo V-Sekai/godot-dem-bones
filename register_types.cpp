@@ -36,9 +36,9 @@
 
 void register_dem_bones_types() {
     Ref<EditorSceneImporterMesh> mesh;
-    mesh.instance();
+    mesh.instantiate();
     convert_blend_shape_animation_to_skinned_animation(mesh.ptr(), nullptr, nullptr);
-}
+} 
 
 void unregister_dem_bones_types() {
 }
