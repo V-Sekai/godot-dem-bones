@@ -8,6 +8,5 @@ env_dem_bones = env_modules.Clone()
 env_dem_bones.Prepend(CPPPATH=['.'])
 env_dem_bones.Prepend(CPPPATH=['include'])
 env_dem_bones.Prepend(CPPPATH=['#thirdparty/eigen/'])
-env_thirdparty = env_dem_bones.Clone()
 
 env_dem_bones.add_source_files(env.modules_sources, "*.cpp")
