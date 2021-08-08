@@ -180,7 +180,7 @@ public:
     lbr.resize(3, nB);
     lbt.resize(3, nB);
 
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int j = 0; j < nB; j++) {
       Eigen::Vector3i ro = rotOrder.col(j).template segment<3>(s * 3);
 
@@ -266,7 +266,7 @@ private:
    */
   int computeRoot() {
     VectorX err(nB);
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int j = 0; j < nB; j++) {
       double ej = 0;
       for (int i = 0; i < nV; i++)
