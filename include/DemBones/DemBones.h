@@ -370,7 +370,7 @@ public:
         wSolver.solve(indexing_row_col(aTai, idx.head(nnzi), idx.head(nnzi)),
                       indexing_vector(aTbi, idx.head(nnzi)), x, true, true);
 
-#pragma omp critical
+// #pragma omp critical
         for (int j = 0; j < nnzi; j++)
           if (x(j) != 0)
             trip.push_back(Triplet(idx[j], i, x(j)));
@@ -532,7 +532,7 @@ private:
       if (j != -1) {
         ei(i) = errorVtxBone(i, j, false);
         if ((seed(j) == -1) || (ei(i) < gLabelMin(j))) {
-#pragma omp critical
+// #pragma omp critical
           if ((seed(j) == -1) || (ei(i) < gLabelMin(j))) {
             gLabelMin(j) = ei(i);
             seed(j) = i;
@@ -643,11 +643,11 @@ private:
       d(i) = (u.col(i) - cu.col(j)).norm();
       e(i) = sqrt(errorVtxBone(i, j, false));
       if (d(i) < minD(j)) {
-#pragma omp critical
+// #pragma omp critical
         minD(j) = std::min(minD(j), d(i));
       }
       if (e(i) < minE(j)) {
-#pragma omp critical
+// #pragma omp critical
         minE(j) = std::min(minE(j), e(i));
       }
 // #pragma omp atomic
@@ -664,7 +664,7 @@ private:
       double tmp = abs((e(i) - minE(j)) * (d(i) - minD(j)));
 
       if ((seed(j) == -1) || (tmp > gMax(j))) {
-#pragma omp critical
+// #pragma omp critical
         if ((seed(j) == -1) || (tmp > gMax(j))) {
           gMax(j) = tmp;
           seed(j) = i;
@@ -914,7 +914,7 @@ private:
         int j = fv[f][(g + 1) % nf];
 
         bool needCompute = false;
-#pragma omp critical
+// #pragma omp critical
         if (isComputed[i].find(j) == isComputed[i].end()) {
           needCompute = true;
           isComputed[i].insert(j);
@@ -934,12 +934,12 @@ private:
           }
           val = 1 / (sqrt(val / nF) + epsDis);
 
-#pragma omp critical
+// #pragma omp critical
           triplet.push_back(Triplet(i, j, -val));
 // #pragma omp atomic
           d(i) += val;
 
-#pragma omp critical
+// #pragma omp critical
           triplet.push_back(Triplet(j, i, -val));
 // #pragma omp atomic
           d(j) += val;
