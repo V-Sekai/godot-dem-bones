@@ -283,7 +283,7 @@ public:
     for (_iterTransformations = 0; _iterTransformations < nTransIters;
          _iterTransformations++) {
       cbTransformationsIterBegin();
-#pragma omp parallel for
+// #pragma omp parallel for
       for (int k = 0; k < nF; k++)
         for (int j = 0; j < nB; j++)
           if (lockM(j) == 0) {
@@ -339,7 +339,7 @@ public:
       double reg_scale = pow(modelSize, 2) * nF;
 
       trip.clear();
-#pragma omp parallel for
+// #pragma omp parallel for
       for (int i = 0; i < nV; i++) {
         MatrixX aTai;
         compute_aTa(i, aTai);
@@ -415,7 +415,7 @@ public:
   //! @return Root mean squared reconstruction error
   _Scalar rmse() {
     _Scalar e = 0;
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int i = 0; i < nV; i++) {
       _Scalar ei = 0;
       Matrix4 mki;
@@ -501,7 +501,7 @@ private:
   */
   _Scalar errorVtxBone(int i, int j, bool par = true) {
     _Scalar e = 0;
-#pragma omp parallel for if (par)
+// #pragma omp parallel for if (par)
     for (int k = 0; k < nF; k++)
 #pragma omp atomic
       e += (m.rotMat(k, j) * u.vec3(subjectID(k), i) + m.transVec(k, j) -
@@ -526,7 +526,7 @@ private:
     VectorX ei(nV);
     Eigen::VectorXi seed = Eigen::VectorXi::Constant(nB, -1);
     VectorX gLabelMin(nB);
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int i = 0; i < nV; i++) {
       int j = label(i);
       if (j != -1) {
@@ -572,7 +572,7 @@ private:
       }
     }
 
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int i = 0; i < nV; i++)
       if (label(i) == -1) {
         _Scalar gMin;
@@ -590,7 +590,7 @@ private:
    */
   void computeTransFromLabel() {
     m = Matrix4::Identity().replicate(nF, nB);
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int k = 0; k < nF; k++) {
       MatrixX qpT = MatrixX::Zero(4, 4 * nB);
       for (int i = 0; i < nV; i++)
@@ -637,7 +637,7 @@ private:
     VectorX minE = VectorX::Constant(nB, std::numeric_limits<_Scalar>::max());
     VectorX ce = VectorX::Zero(nB);
 
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int i = 0; i < nV; i++) {
       int j = label(i);
       d(i) = (u.col(i) - cu.col(j)).norm();
@@ -658,7 +658,7 @@ private:
     Eigen::VectorXi seed = Eigen::VectorXi::Constant(nB, -1);
     VectorX gMax(nB);
 
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int i = 0; i < nV; i++) {
       int j = label(i);
       double tmp = abs((e(i) - minE(j)) * (d(i) - minD(j)));
@@ -690,7 +690,7 @@ private:
   */
   void pruneBones(int threshold) {
     Eigen::VectorXi s = Eigen::VectorXi::Zero(nB);
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int i = 0; i < nV; i++) {
 #pragma omp atomic
       s(label(i))++;
@@ -712,7 +712,7 @@ private:
         m.template middleCols<4>(newID(j) * 4) =
             m.template middleCols<4>(j * 4);
 
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int i = 0; i < nV; i++)
       label(i) = newID(label(i));
 
@@ -725,7 +725,7 @@ private:
    */
   void initWeights() {
     label = Eigen::VectorXi::Constant(nV, -1);
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int i = 0; i < nV; i++) {
       _Scalar gMin;
       for (int j = 0; j < nB; j++) {
@@ -748,7 +748,7 @@ private:
    */
   void compute_vuT() {
     vuT = MatrixX::Zero(nF * 4, nB * 4);
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int k = 0; k < nF; k++) {
       MatrixX vuTp = MatrixX::Zero(4, nB * 4);
       for (int i = 0; i < nV; i++)
@@ -780,7 +780,7 @@ private:
    */
   void compute_uuT() {
     Eigen::MatrixXi pos = Eigen::MatrixXi::Constant(nB, nB, -1);
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int i = 0; i < nV; i++)
       for (typename SparseMatrix::InnerIterator it(w, i); it; ++it)
         for (typename SparseMatrix::InnerIterator jt(w, i); jt; ++jt)
@@ -801,7 +801,7 @@ private:
     uuT.innerIdx.conservativeResize(nnz);
     uuT.val = MatrixX::Zero(nS * 4, nnz * 4);
 
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int i = 0; i < nV; i++)
       for (typename SparseMatrix::InnerIterator it(w, i); it; ++it)
         for (typename SparseMatrix::InnerIterator jt(w, i); jt; ++jt)
@@ -845,7 +845,7 @@ private:
       }
 
     mTm = MatrixX::Zero(nS * nB * 4, nB * 4);
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int p = 0; p < nPairs; p++) {
       int i = idx(0, p);
       int j = idx(1, p);
@@ -867,7 +867,7 @@ private:
   /** Pre-compute aTb for weights update
    */
   void compute_aTb() {
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int i = 0; i < nV; i++)
       for (int j = 0; j < nB; j++)
         if ((aTb(j, i) == 0) && (ws(j, i) > weightEps))
@@ -906,7 +906,7 @@ private:
     VectorX d = VectorX::Zero(nV);
     std::vector<std::set<int>> isComputed(nV);
 
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int f = 0; f < nFV; f++) {
       int nf = (int)fv[f].size();
       for (int g = 0; g < nf; g++) {
@@ -969,12 +969,12 @@ private:
    */
   void compute_ws() {
     ws = w.transpose();
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int j = 0; j < nB; j++)
       ws.col(j) = smoothSolver.solve(ws.col(j));
     ws.transposeInPlace();
 
-#pragma omp parallel for
+// #pragma omp parallel for
     for (int i = 0; i < nV; i++) {
       ws.col(i) = ws.col(i).cwiseMax(0.0);
       _Scalar si = ws.col(i).sum();
