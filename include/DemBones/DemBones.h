@@ -525,16 +525,16 @@ private:
   void computeLabel() {
     VectorX ei(nV);
     Eigen::VectorXi seed = Eigen::VectorXi::Constant(nB, -1);
-    VectorX gMin(nB);
+    VectorX gLabelMin(nB);
 #pragma omp parallel for
     for (int i = 0; i < nV; i++) {
       int j = label(i);
       if (j != -1) {
         ei(i) = errorVtxBone(i, j, false);
-        if ((seed(j) == -1) || (ei(i) < gMin(j))) {
+        if ((seed(j) == -1) || (ei(i) < gLabelMin(j))) {
 #pragma omp critical
-          if ((seed(j) == -1) || (ei(i) < gMin(j))) {
-            gMin(j) = ei(i);
+          if ((seed(j) == -1) || (ei(i) < gLabelMin(j))) {
+            gLabelMin(j) = ei(i);
             seed(j) = i;
           }
         }

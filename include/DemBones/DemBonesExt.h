@@ -180,7 +180,6 @@ public:
     lbr.resize(3, nB);
     lbt.resize(3, nB);
 
-    MatrixX lm(4 * nFs, 4 * nB);
 #pragma omp parallel for
     for (int j = 0; j < nB; j++) {
       Eigen::Vector3i ro = rotOrder.col(j).template segment<3>(s * 3);
