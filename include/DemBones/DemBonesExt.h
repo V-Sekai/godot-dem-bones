@@ -203,18 +203,18 @@ public:
       lbr.col(j) = curRot;
       lbt.col(j) = lb.template topRightCorner<3, 1>();
 
-      Matrix4 lm;
+      Matrix4 _lm;
       for (int k = 0; k < nFs; k++) {
         if (parent(j) == -1)
-          lm = preMulInv.blk4(s, j) * m.blk4(k + fStart(s), j) * gb.blk4(0, j);
+          _lm = preMulInv.blk4(s, j) * m.blk4(k + fStart(s), j) * gb.blk4(0, j);
         else
-          lm = preMulInv.blk4(s, j) *
+          _lm = preMulInv.blk4(s, j) *
                (m.blk4(k + fStart(s), parent(j)) * gb.blk4(0, parent(j)))
                    .inverse() *
                m.blk4(k + fStart(s), j) * gb.blk4(0, j);
-        toRot(invOM * lm.template topLeftCorner<3, 3>(), curRot, ro);
+        toRot(invOM * _lm.template topLeftCorner<3, 3>(), curRot, ro);
         lr.vec3(k, j) = curRot;
-        lt.vec3(k, j) = lm.template topRightCorner<3, 1>();
+        lt.vec3(k, j) = _lm.template topRightCorner<3, 1>();
       }
     }
 
