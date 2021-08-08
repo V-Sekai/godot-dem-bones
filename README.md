@@ -1,8 +1,4 @@
-<img align="left" width="60" height="60" src="logo/DemBones.png">
-
 # Dem Bones
-[![BSD3 Clause](https://img.shields.io/badge/license-BSD3_Clause-blue.svg)](LICENSE.md)
-[![Version](https://img.shields.io/badge/version-1.2.1-green.svg)](VERSION.md)
 
 This repository contains an implementation of [Smooth Skinning Decomposition with Rigid Bones](http://binh.graphics/papers/2012sa-ssdr/), 
 an automated algorithm to extract the *Linear Blend Skinning* (LBS) with bone transformations from a set of example meshes. 
@@ -89,17 +85,11 @@ The skinning weights smoothing regularization was published in the paper:
 
 ## Authors
 
-<p align="center"><a href="https://seed.ea.com"><img src="logo/SEED.jpg" width="150px"></a><br>
 <b>Search for Extraordinary Experiences Division (SEED) - Electronic Arts <br> http://seed.ea.com</b><br>
 We are a cross-disciplinary team within EA Worldwide Studios.<br>
 Our mission is to explore, build and help define the future of interactive entertainment.</p>
 
 Dem Bones was created by Binh Le (ble@ea.com). The [logo](logo/DemBones.png) was designed by Phuong Le.
-
-## Contributing
-
-Before you can contribute, EA must have a Contributor License Agreement (CLA) on file that has been signed by each contributor.
-You can sign here: http://bit.ly/electronic-arts-cla
 
 ## Licenses
 
