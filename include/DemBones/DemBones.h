@@ -428,7 +428,7 @@ public:
                v.vec3(k, i).template cast<_Scalar>())
                   .squaredNorm();
       }
-#pragma omp atomic
+// #pragma omp atomic
       e += ei;
     }
     return std::sqrt(e / nF / nV);
@@ -503,7 +503,7 @@ private:
     _Scalar e = 0;
 // #pragma omp parallel for if (par)
     for (int k = 0; k < nF; k++)
-#pragma omp atomic
+// #pragma omp atomic
       e += (m.rotMat(k, j) * u.vec3(subjectID(k), i) + m.transVec(k, j) -
             v.vec3(k, i).template cast<_Scalar>())
                .squaredNorm();
@@ -650,7 +650,7 @@ private:
 #pragma omp critical
         minE(j) = std::min(minE(j), e(i));
       }
-#pragma omp atomic
+// #pragma omp atomic
       ce(j) += e(i);
     }
 
@@ -692,7 +692,7 @@ private:
     Eigen::VectorXi s = Eigen::VectorXi::Zero(nB);
 // #pragma omp parallel for
     for (int i = 0; i < nV; i++) {
-#pragma omp atomic
+// #pragma omp atomic
       s(label(i))++;
     }
 
@@ -816,7 +816,7 @@ private:
             int p = pos(it.row(), jt.row()) * 4;
             for (int c = 0; c < 4; c++)
               for (int r = 0; r < 4 * nS; r++)
-#pragma omp atomic
+// #pragma omp atomic
                 uuT.val(r, p + c) += _uuT(r, c);
           }
 
@@ -936,12 +936,12 @@ private:
 
 #pragma omp critical
           triplet.push_back(Triplet(i, j, -val));
-#pragma omp atomic
+// #pragma omp atomic
           d(i) += val;
 
 #pragma omp critical
           triplet.push_back(Triplet(j, i, -val));
-#pragma omp atomic
+// #pragma omp atomic
           d(j) += val;
         }
       }
