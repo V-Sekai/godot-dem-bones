@@ -18,7 +18,7 @@
 #endif
 
 #include "core/config/engine.h"
-#include "editor/import/scene_importer_mesh.h"
+#include "scene/resources/importer_mesh.h"
 #include "scene/3d/skeleton_3d.h"
 #include "scene/animation/animation_player.h"
 #include "scene/resources/mesh.h"
@@ -405,7 +405,7 @@ public:
 } // namespace Dem
 
 Error convert_blend_shape_animation_to_skinned_animation(
-		EditorSceneImporterMesh *p_model, Skeleton3D *p_skeleton,
+		ImporterMesh *p_model, Skeleton3D *p_skeleton,
 		AnimationPlayer *p_ap) {
 	// TODO 2021-04-20
 	// - To hard-lock the transformations of bones: in the input fbx files,
