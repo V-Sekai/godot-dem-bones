@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  editor_scene_exporter_gltf_plugin.h                                  */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,26 +28,24 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "register_types.h"
-#include "scene/resources/importer_mesh.h"
-#include "scene/resources/surface_tool.h"
-#ifdef TOOLS_ENABLED
+#ifndef BAKE_BLEND_SHAPES_PLUGIN_H
+#define BAKE_BLEND_SHAPES_PLUGIN_H
+
+#if TOOLS_ENABLED
 #include "editor/editor_plugin.h"
-#include "bake_blend_shapes_plugin.h"
-#endif
 
-#include "DemBones/DemBonesExt.h"
+class BakeBlendShapesPlugin : public EditorPlugin {
+	GDCLASS(BakeBlendShapesPlugin, EditorPlugin);
 
-void register_dem_bones_types() {
-#ifndef _3D_DISABLED
-#ifdef TOOLS_ENABLED
-	EditorPlugins::add_by_type<BakeBlendShapesPlugin>();
-#endif
-	Ref<ImporterMesh> mesh;
-	mesh.instantiate();
-	convert_blend_shape_animation_to_skinned_animation(mesh.ptr(), nullptr, nullptr);
-#endif
-}
+	EditorNode *editor = nullptr;
+	EditorFileDialog *file_export_lib = nullptr;
+	void _gltf2_dialog_action(String p_file);
+	void convert_scene_to_gltf2();
 
-void unregister_dem_bones_types() {
-}
+public:
+	virtual String get_name() const override;
+	bool has_main_screen() const override;
+	BakeBlendShapesPlugin(class EditorNode *p_node);
+};
+#endif // TOOLS_ENABLED
+#endif // BAKE_BLEND_SHAPES_PLUGIN_H
