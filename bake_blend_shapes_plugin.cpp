@@ -60,8 +60,8 @@ BakeBlendShapesPlugin::BakeBlendShapesPlugin(EditorNode *p_node) {
 	file_export_lib->clear_filters();
 	file_export_lib->add_filter("*.glb");
 	file_export_lib->add_filter("*.gltf");
-	file_export_lib->set_title(TTR("Bake Blend Shapes"));
-	String gltf_scene_name = TTR("Export GLTF...");
+	file_export_lib->set_title(TTR("Bake Blend Shapes..."));
+	String gltf_scene_name = TTR("Bake Blend Shapes");
 	add_tool_menu_item(gltf_scene_name, callable_mp(this, &BakeBlendShapesPlugin::convert_scene_to_gltf2));
 }
 
