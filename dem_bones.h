@@ -18,9 +18,9 @@ public:
 		while (!queue.is_empty()) {
 			List<Node *>::Element *front = queue.front();
 			Node *node = front->get();
+			ap = cast_to<AnimationPlayer>(node);
 			if (ap) {
 				// Use the first animation player
-				ap = cast_to<AnimationPlayer>(node);
 				queue.clear();
 				break;
 			}
