@@ -453,6 +453,8 @@ public:
 			vertex.col(vertex_i) << pos_x, pos_y, pos_z;
 		}
 
+		// TODO: iFire 2021-10-05 Add frames
+
 		// TODO iFire 2021-04-20
 		// rest_pose_geometry.block(0, 0, 3, num_vertices) = vertex;
 		PackedInt32Array indices = p_mesh[Mesh::ARRAY_INDEX];
