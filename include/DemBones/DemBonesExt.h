@@ -32,7 +32,7 @@ namespace Dem {
    matrices after skinning decomposition is done and other data is set.
 
         @b _Scalar is the floating-point data type. @b _AniMeshScalar is the
-   floating-point data type of mesh sequence #v.
+   floating-point data type of mesh sequence #vertex.
 */
 template <class _Scalar, class _AniMeshScalar>
 class DemBonesExt : public DemBones<_Scalar, _AniMeshScalar> {
@@ -59,47 +59,47 @@ public:
 	using DemBones<_Scalar, _AniMeshScalar>::weightsSmoothStep;
 	using DemBones<_Scalar, _AniMeshScalar>::weightEps;
 
-	using DemBones<_Scalar, _AniMeshScalar>::nV;
-	using DemBones<_Scalar, _AniMeshScalar>::nB;
-	using DemBones<_Scalar, _AniMeshScalar>::nS;
-	using DemBones<_Scalar, _AniMeshScalar>::nF;
-	using DemBones<_Scalar, _AniMeshScalar>::fStart;
-	using DemBones<_Scalar, _AniMeshScalar>::subjectID;
-	using DemBones<_Scalar, _AniMeshScalar>::u;
-	using DemBones<_Scalar, _AniMeshScalar>::w;
-	using DemBones<_Scalar, _AniMeshScalar>::lockW;
-	using DemBones<_Scalar, _AniMeshScalar>::m;
-	using DemBones<_Scalar, _AniMeshScalar>::lockM;
-	using DemBones<_Scalar, _AniMeshScalar>::v;
+	using DemBones<_Scalar, _AniMeshScalar>::num_vertices;
+	using DemBones<_Scalar, _AniMeshScalar>::num_bones;
+	using DemBones<_Scalar, _AniMeshScalar>::num_subjects;
+	using DemBones<_Scalar, _AniMeshScalar>::num_total_frames;
+	using DemBones<_Scalar, _AniMeshScalar>::frame_start_index;
+	using DemBones<_Scalar, _AniMeshScalar>::frame_subject_id;
+	using DemBones<_Scalar, _AniMeshScalar>::rest_pose_geometry;
+	using DemBones<_Scalar, _AniMeshScalar>::skinning_weights;
+	using DemBones<_Scalar, _AniMeshScalar>::lock_weight;
+	using DemBones<_Scalar, _AniMeshScalar>::bone_transform_mat;
+	using DemBones<_Scalar, _AniMeshScalar>::lock_mat;
+	using DemBones<_Scalar, _AniMeshScalar>::vertex;
 	using DemBones<_Scalar, _AniMeshScalar>::fv;
 
-	//! Timestamps for bone transformations #m, [@c size] = #nS, #fTime(@p k) is
+	//! Timestamps for bone transformations #bone_transform_mat, [@c size] = #num_subjects, #fTime(@p k) is
 	//! the timestamp of frame @p k
 	Eigen::VectorXd fTime;
 
-	//! Name of bones, [@c size] = #nB, #boneName(@p j) is the name bone of @p j
+	//! Name of bones, [@c size] = #num_bones, #boneName(@p j) is the name bone of @p j
 	std::vector<std::string> boneName;
 
-	//! Parent bone index, [@c size] = #nB, #parent(@p j) is the index of parent
+	//! Parent bone index, [@c size] = #num_bones, #parent(@p j) is the index of parent
 	//! bone of @p j, #parent(@p j) = -1 if @p j has no parent.
 	Eigen::VectorXi parent;
 
-	//! Original bind pre-matrix, [@c size] = [4*#nS, 4*#nB], #bind.@a block(4*@p
+	//! Original bind pre-matrix, [@c size] = [4*#num_subjects, 4*#num_bones], #bind.@a block(4*@p
 	//! s, 4*@p j, 4, 4) is the global bind matrix of bone @p j on subject @p s at
 	//! the rest pose
 	MatrixX bind;
 
-	//! Inverse pre-multiplication matrices, [@c size] = [4*#nS, 4*#nB],
+	//! Inverse pre-multiplication matrices, [@c size] = [4*#num_subjects, 4*#num_bones],
 	//! #preMulInv.@a block(4*@p s, 4*@p j, 4, 4) is the inverse of pre-local
 	//! transformation of bone @p j on subject @p s
 	MatrixX preMulInv;
 
-	//! Rotation order, [@c size] = [3*#nS, #nB], #rotOrder.@a col(@p j).@a
+	//! Rotation order, [@c size] = [3*#num_subjects, #num_bones], #rotOrder.@a col(@p j).@a
 	//! segment<3>(3*@p s) is the rotation order of bone @p j on subject @p s,
 	//! 0=@c X, 1=@c Y, 2=@c Z, e.g. {0, 1, 2} is @c XYZ order
 	Eigen::MatrixXi rotOrder;
 
-	//! Orientations of bones,  [@c size] = [3*#nS, #nB], @p orient.@a col(@p
+	//! Orientations of bones,  [@c size] = [3*#num_subjects, #num_bones], @p orient.@a col(@p
 	//! j).@a segment<3>(3*@p s) is the(@c rx, @c ry, @c rz) orientation of bone
 	//! @p j in degree
 	MatrixX orient;
@@ -128,29 +128,29 @@ public:
 	}
 
 	/** @brief Local rotations, translations and global bind matrices of a subject
-          @details Required all data in the base class: #u, #fv, #nV, #v, #nF,
-     #fStart, #subjectID, #nS, #m, #w, #nB
+          @details Required all data in the base class: #rest_pose_geometry, #fv, #num_vertices, #vertex, #num_total_frames,
+     #frame_start_index, #frame_subject_id, #num_subjects, #bone_transform_mat, #skinning_weights, #num_bones
 
           This function will initialize missing attributes:
           - #parent: -1 vector (if no joint grouping) or parent to a root, [@c
-     size] = #nB
-          - #preMulInv: 4*4 identity matrix blocks, [@c size] = [4*#nS, 4*#nB]
-          - #rotOrder: {0, 1, 2} vector blocks, [@c size] = [3*#nS, #nB]
-          - #orient: 0 matrix, [@c size] = [3*#nS, #nB]
+     size] = #num_bones
+          - #preMulInv: 4*4 identity matrix blocks, [@c size] = [4*#num_subjects, 4*#num_bones]
+          - #rotOrder: {0, 1, 2} vector blocks, [@c size] = [3*#num_subjects, #num_bones]
+          - #orient: 0 matrix, [@c size] = [3*#num_subjects, #num_bones]
 
           @param[in] s is the subject index
-          @param[out] lr is the [3*@p nFr, #nB] by-reference output local
+          @param[out] lr is the [3*@p nFr, #num_bones] by-reference output local
      rotations, @p lr.@a col(@p j).segment<3>(3*@p k) is the (@c rx, @c ry, @c
      rz) of bone @p j at frame @p k
-          @param[out] lt is the [3*@p nFr, #nB] by-reference output local
+          @param[out] lt is the [3*@p nFr, #num_bones] by-reference output local
      translations, @p lt.@a col(@p j).segment<3>(3*@p k) is the (@c tx, @c ty,
      @c tz) of bone @p j at frame @p k
-          @param[out] gb is the [4, 4*#nB] by-reference output global bind
+          @param[out] gb is the [4, 4*#num_bones] by-reference output global bind
      matrices, @p gb.@a block(0, 4*@p j, 4, 4) is the bind matrix of bone j
-          @param[out] lbr is the [3, #nB] by-reference output local rotations at
+          @param[out] lbr is the [3, #num_bones] by-reference output local rotations at
      bind pose @p lbr.@a col(@p j).segment<3>(3*@p k) is the (@c rx, @c ry, @c
      rz) of bone @p j
-          @param[out] lbt is the [3, #nB] by-reference output local translations
+          @param[out] lbt is the [3, #num_bones] by-reference output local translations
      at bind pose, @p lbt.@a col(@p j).segment<3>(3*@p k) is the (@c tx, @c ty,
      @c tz) of bone @p j
           @param[in] degreeRot=true will output rotations in degree, otherwise
@@ -163,26 +163,26 @@ public:
 		if (parent.size() == 0) {
 			if (bindUpdate == 2) {
 				int root = computeRoot();
-				parent = Eigen::VectorXi::Constant(nB, root);
+				parent = Eigen::VectorXi::Constant(num_bones, root);
 				parent(root) = -1;
 			} else
-				parent = Eigen::VectorXi::Constant(nB, -1);
+				parent = Eigen::VectorXi::Constant(num_bones, -1);
 		}
 		if (preMulInv.size() == 0)
-			preMulInv = MatrixX::Identity(4, 4).replicate(nS, nB);
+			preMulInv = MatrixX::Identity(4, 4).replicate(num_subjects, num_bones);
 		if (rotOrder.size() == 0)
-			rotOrder = Eigen::Vector3i(0, 1, 2).replicate(nS, nB);
+			rotOrder = Eigen::Vector3i(0, 1, 2).replicate(num_subjects, num_bones);
 		if (orient.size() == 0)
-			orient = MatrixX::Zero(3 * nS, nB);
+			orient = MatrixX::Zero(3 * num_subjects, num_bones);
 
-		int nFs = fStart(s + 1) - fStart(s);
-		lr.resize(nFs * 3, nB);
-		lt.resize(nFs * 3, nB);
-		lbr.resize(3, nB);
-		lbt.resize(3, nB);
+		int nFs = frame_start_index(s + 1) - frame_start_index(s);
+		lr.resize(nFs * 3, num_bones);
+		lt.resize(nFs * 3, num_bones);
+		lbr.resize(3, num_bones);
+		lbt.resize(3, num_bones);
 
 		// #pragma omp parallel for
-		for (int j = 0; j < nB; j++) {
+		for (int j = 0; j < num_bones; j++) {
 			Eigen::Vector3i ro = rotOrder.col(j).template segment<3>(s * 3);
 
 			Vector3 ov = orient.vec3(s, j) * EIGEN_PI / 180;
@@ -207,12 +207,12 @@ public:
 			Matrix4 _lm;
 			for (int k = 0; k < nFs; k++) {
 				if (parent(j) == -1)
-					_lm = preMulInv.blk4(s, j) * m.blk4(k + fStart(s), j) * gb.blk4(0, j);
+					_lm = preMulInv.blk4(s, j) * bone_transform_mat.blk4(k + frame_start_index(s), j) * gb.blk4(0, j);
 				else
 					_lm = preMulInv.blk4(s, j) *
-						  (m.blk4(k + fStart(s), parent(j)) * gb.blk4(0, parent(j)))
+						  (bone_transform_mat.blk4(k + frame_start_index(s), parent(j)) * gb.blk4(0, parent(j)))
 								  .inverse() *
-						  m.blk4(k + fStart(s), j) * gb.blk4(0, j);
+						  bone_transform_mat.blk4(k + frame_start_index(s), j) * gb.blk4(0, j);
 				toRot(invOM * _lm.template topLeftCorner<3, 3>(), curRot, ro);
 				lr.vec3(k, j) = curRot;
 				lt.vec3(k, j) = _lm.template topRightCorner<3, 1>();
@@ -228,17 +228,17 @@ public:
 private:
 	/** p-norm centroids (using #transAffineNorm) and rotations to identity
           @param s is the subject index
-          @param b is the [4, 4*#nB] by-reference output global bind matrices,
+          @param b is the [4, 4*#num_bones] by-reference output global bind matrices,
      #b.#a block(0, 4*@p j, 4, 4) is the bind matrix of bone @p j
   */
 	void computeCentroids(int s, MatrixX &b) {
-		MatrixX c = MatrixX::Zero(4, nB);
-		for (int i = 0; i < nV; i++)
-			for (typename SparseMatrix::InnerIterator it(w, i); it; ++it)
+		MatrixX c = MatrixX::Zero(4, num_bones);
+		for (int i = 0; i < num_vertices; i++)
+			for (typename SparseMatrix::InnerIterator it(skinning_weights, i); it; ++it)
 				c.col(it.row()) +=
-						pow(it.value(), transAffineNorm) * u.vec3(s, i).homogeneous();
-		for (int j = 0; j < nB; j++)
-			if ((c(3, j) != 0) && (lockM(j) == 0))
+						pow(it.value(), transAffineNorm) * rest_pose_geometry.vec3(s, i).homogeneous();
+		for (int j = 0; j < num_bones; j++)
+			if ((c(3, j) != 0) && (lock_mat(j) == 0))
 				b.transVec(0, j) = c.col(j).template head<3>() / c(3, j);
 	}
 
@@ -247,20 +247,20 @@ private:
           @param bindUpdate is the type of bind pose update, 0=keep original, 1
      or 2=set translations to p-norm centroids (using #transAffineNorm) and
      rotations to identity
-          @param b is the the [4, 4*#nB] by-reference output global bind
+          @param b is the the [4, 4*#num_bones] by-reference output global bind
      matrices, #b.#a block(0, 4*@p j, 4, 4) is the bind matrix of bone @p j
   */
 	void computeBind(int s, MatrixX &b) {
 		if (bind.size() == 0) {
-			lockM = Eigen::VectorXi::Zero(nB);
-			bind.resize(nS * 4, nB * 4);
-			for (int k = 0; k < nS; k++) {
-				b = MatrixX::Identity(4, 4).replicate(1, nB);
+			lock_mat = Eigen::VectorXi::Zero(num_bones);
+			bind.resize(num_subjects * 4, num_bones * 4);
+			for (int k = 0; k < num_subjects; k++) {
+				b = MatrixX::Identity(4, 4).replicate(1, num_bones);
 				computeCentroids(k, b);
-				bind.block(4 * k, 0, 4, 4 * nB) = b;
+				bind.block(4 * k, 0, 4, 4 * num_bones) = b;
 			}
 		}
-		b = bind.block(4 * s, 0, 4, 4 * nB);
+		b = bind.block(4 * s, 0, 4, 4 * num_bones);
 		if (bindUpdate >= 1) {
 			computeCentroids(s, b);
 		}
@@ -269,14 +269,14 @@ private:
 	/** Root joint
    */
 	int computeRoot() {
-		VectorX err(nB);
+		VectorX err(num_bones);
 		// #pragma omp parallel for
-		for (int j = 0; j < nB; j++) {
+		for (int j = 0; j < num_bones; j++) {
 			double ej = 0;
-			for (int i = 0; i < nV; i++)
-				for (int k = 0; k < nF; k++)
-					ej += (m.rotMat(k, j) * u.vec3(subjectID(k), i) + m.transVec(k, j) -
-							v.vec3(k, i).template cast<_Scalar>())
+			for (int i = 0; i < num_vertices; i++)
+				for (int k = 0; k < num_total_frames; k++)
+					ej += (bone_transform_mat.rotMat(k, j) * rest_pose_geometry.vec3(frame_subject_id(k), i) + bone_transform_mat.transVec(k, j) -
+							vertex.vec3(k, i).template cast<_Scalar>())
 								  .squaredNorm();
 			err(j) = ej;
 		}
@@ -338,23 +338,23 @@ public:
 			return p_mesh;
 		}
 		ERR_FAIL_NULL_V(p_skeleton, Array());
-		nS = 1;
+		num_subjects = 1;
 
 		PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
 
-		nV = vertex_arrays.size();
-		v.resize(3, nV);
-		u.resize(nS * 3, nV);
+		num_vertices = vertex_arrays.size();
+		vertex.resize(3, num_vertices);
+		rest_pose_geometry.resize(num_subjects * 3, num_vertices);
 		for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
 				vertex_i++) {
 			const float pos_x = vertex_arrays[vertex_i].x;
 			const float pos_y = vertex_arrays[vertex_i].y;
 			const float pos_z = vertex_arrays[vertex_i].z;
-			v.col(vertex_i) << pos_x, pos_y, pos_z;
+			vertex.col(vertex_i) << pos_x, pos_y, pos_z;
 		}
 
 		// TODO iFire 2021-04-20
-		// u.block(0, 0, 3, nV) = v;
+		// rest_pose_geometry.block(0, 0, 3, num_vertices) = vertex;
 		PackedInt32Array indices = p_mesh[Mesh::ARRAY_INDEX];
 
 		// Assume triangles
@@ -375,8 +375,8 @@ public:
 		for (int32_t bones_i = 0; bones_i < bones.size(); bones_i++) {
 			bone_set.insert(bones[bones_i]);
 		}
-		nB = bone_set.size();
-		nF = 1;
+		num_bones = bone_set.size();
+		num_total_frames = 1;
 		const int iteration_max = 100;
 		double tolerance = 0.0;
 		int patience = 3;

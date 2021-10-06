@@ -24,7 +24,7 @@ namespace Dem {
 /** @mainpage Overview
         Main elements:
         - @ref DemBones : base class with the core solver using relative bone
-   transformations DemBones::m
+   transformations DemBones::bone_transform_mat
         - @ref DemBonesExt : extended class to handle hierarchical skeleton with
    local rotations/translations and bind matrices
         - DemBones/MatBlocks.h: macros to access sub-blocks of packing
@@ -33,15 +33,15 @@ namespace Dem {
         Include DemBones/DemBonesExt.h (or DemBones/DemBones.h) with optional
    DemBones/MatBlocks.h then follow these steps to use the library:
         -# Load required data in the base class:
-                - Rest shapes: DemBones::u, DemBones::fv, DemBones::nV
-                - Sequence: DemBones::v, DemBones::nF, DemBones::fStart,
-   DemBones::subjectID, DemBones::nS
-                - Number of bones DemBones::nB
+                - Rest shapes: DemBones::rest_pose_geometry, DemBones::fv, DemBones::num_vertices
+                - Sequence: DemBones::vertex, DemBones::num_total_frames, DemBones::frame_start_index,
+   DemBones::frame_subject_id, DemBones::num_subjects
+                - Number of bones DemBones::num_bones
         -# Load optional data in the base class:
-                - Skinning weights DemBones::w and weights soft-lock
-   DemBones::lockW
-                - Bone transformations DemBones::m and bones hard-lock
-   DemBones::lockM
+                - Skinning weights DemBones::skinning_weights and weights soft-lock
+   DemBones::lock_weight
+                - Bone transformations DemBones::bone_transform_mat and bones hard-lock
+   DemBones::lock_mat
         -# [@c optional] Set parameters in the base class:
                 - DemBones::nIters
                 - DemBones::nInitIters
@@ -77,7 +77,7 @@ namespace Dem {
    rmse(), #iter, #iterTransformations, #iterWeights.
 
         @b _Scalar is the floating-point data type. @b _AniMeshScalar is the
-   floating-point data type of mesh sequence #v.
+   floating-point data type of mesh sequence #vertex.
 */
 template <class _Scalar, class _AniMeshScalar>
 class DemBones {
@@ -126,51 +126,51 @@ public:
 	DemBones() { clear(); }
 
 	//! Number of vertices, typically indexed by @p i
-	int nV;
+	int num_vertices;
 	//! Number of bones, typically indexed by @p j
-	int nB;
+	int num_bones;
 	//! Number of subjects, typically indexed by @p s
-	int nS;
-	//! Number of total frames, typically indexed by @p k, #nF = #fStart(#nS)
-	int nF;
+	int num_subjects;
+	//! Number of total frames, typically indexed by @p k, #num_total_frames = #frame_start_index(#num_subjects)
+	int num_total_frames;
 
-	//! Start frame indices, @c size = #nS+1, #fStart(@p s), #fStart(@p s+1) are
+	//! Start frame indices, @c size = #num_subjects+1, #frame_start_index(@p s), #frame_start_index(@p s+1) are
 	//! data frames for subject @p s
-	Eigen::VectorXi fStart;
-	//! Subject index of the frame, @c size = #nF, #subjectID(@p k)=@p s, where
-	//! #fStart(@p s) <= @p k < #fStart(<tt>s</tt>+1)
-	Eigen::VectorXi subjectID;
+	Eigen::VectorXi frame_start_index;
+	//! Subject index of the frame, @c size = #num_total_frames, #frame_subject_id(@p k)=@p s, where
+	//! #frame_start_index(@p s) <= @p k < #frame_start_index(<tt>s</tt>+1)
+	Eigen::VectorXi frame_subject_id;
 
-	//! Geometry at the rest poses, @c size = [3*#nS, #nV], #u.@a col(@p i).@a
+	//! Geometry at the rest poses, @c size = [3*#num_subjects, #num_vertices], #rest_pose_geometry.@a col(@p i).@a
 	//! segment(3*@p s, 3) is the rest pose of vertex @p i of subject @p s
-	MatrixX u;
+	MatrixX rest_pose_geometry;
 
-	//! Skinning weights, @c size = [#nB, #nV], #w.@a col(@p i) are the skinning
-	//! weights of vertex @p i, #w(@p j, @p i) is the influence of bone @p j to
+	//! Skinning weights, @c size = [#num_bones, #num_vertices], #skinning_weights.@a col(@p i) are the skinning
+	//! weights of vertex @p i, #skinning_weights(@p j, @p i) is the influence of bone @p j to
 	//! vertex @p i
-	SparseMatrix w;
+	SparseMatrix skinning_weights;
 
-	//! Skinning weights lock control, @c size = #nV, #lockW(@p i) is the amount
+	//! Skinning weights lock control, @c size = #num_vertices, #lock_weight(@p i) is the amount
 	//! of input skinning weights will be kept for vertex @p i, where 0 (no lock)
-	//! <= #lockW(@p i) <= 1 (full lock)
-	VectorX lockW;
+	//! <= #lock_weight(@p i) <= 1 (full lock)
+	VectorX lock_weight;
 
-	/** @brief Bone transformations, @c size = [4*#nF*4, 4*#nB], #m.@a blk4(@p k,
+	/** @brief Bone transformations, @c size = [4*#num_total_frames*4, 4*#num_bones], #bone_transform_mat.@a blk4(@p k,
      @p j) is the 4*4 relative transformation matrix of bone @p j at frame @p k
-          @details Note that the transformations are relative, that is #m.@a
+          @details Note that the transformations are relative, that is #bone_transform_mat.@a
      blk4(@p k, @p j) brings the global transformation of bone @p j from the
      rest pose to the pose at frame @p k.
   */
-	MatrixX m;
+	MatrixX bone_transform_mat;
 
-	//! Bone transformation lock control, @c size = #nB, #lockM(@p j) is the
+	//! Bone transformation lock control, @c size = #num_bones, #lock_mat(@p j) is the
 	//! amount of input transformations will be kept for bone @p j, where
-	//! #lockM(@p j) = 0 (no lock) or 1 (lock)
-	Eigen::VectorXi lockM;
+	//! #lock_mat(@p j) = 0 (no lock) or 1 (lock)
+	Eigen::VectorXi lock_mat;
 
-	//! Animated mesh sequence, @c size = [3*#nF, #nV], #v.@a col(@p i).@a
+	//! Animated mesh sequence, @c size = [3*#num_total_frames, #num_vertices], #vertex.@a col(@p i).@a
 	//! segment(3*@p k, 3) is the position of vertex @p i at frame @p k
-	Eigen::Matrix<_AniMeshScalar, Eigen::Dynamic, Eigen::Dynamic> v;
+	Eigen::Matrix<_AniMeshScalar, Eigen::Dynamic, Eigen::Dynamic> vertex;
 
 	//! Mesh topology, @c size=[<tt>number of polygons</tt>], #fv[@p p] is the
 	//! vector of vertex indices of polygon @p p
@@ -179,31 +179,31 @@ public:
 	/** @brief Clear all data
    */
 	void clear() {
-		nV = nB = nS = nF = 0;
-		fStart.resize(0);
-		subjectID.resize(0);
-		u.resize(0, 0);
-		w.resize(0, 0);
-		lockW.resize(0);
-		m.resize(0, 0);
-		lockM.resize(0);
-		v.resize(0, 0);
+		num_vertices = num_bones = num_subjects = num_total_frames = 0;
+		frame_start_index.resize(0);
+		frame_subject_id.resize(0);
+		rest_pose_geometry.resize(0, 0);
+		skinning_weights.resize(0, 0);
+		lock_weight.resize(0);
+		bone_transform_mat.resize(0, 0);
+		lock_mat.resize(0);
+		vertex.resize(0, 0);
 		fv.resize(0);
 		modelSize = -1;
 		laplacian.resize(0, 0);
 	}
 
 	/** @brief Initialize missing skinning weights and/or bone transformations
-          @details Depending on the status of #w and #m, this function will:
-                  - Both #w and #m are already set: do nothing
-                  - Only one in #w or #m is missing (zero size): initialize
-     missing matrix, i.e. #w (or #m)
-                  - Both #w and #m are missing (zero size): initialize both with
-     rigid skinning using approximately #nB bones, i.e. values of #w are 0 or 1.
-                  LBG-VQ clustering is peformed using mesh sequence #v, rest
-     pose geometries #u and topology #fv.
-                  @b Note: as the initialization does not use exactly #nB bones,
-     the value of #nB could be changed when both #w and #m are missing.
+          @details Depending on the status of #skinning_weights and #bone_transform_mat, this function will:
+                  - Both #skinning_weights and #bone_transform_mat are already set: do nothing
+                  - Only one in #skinning_weights or #bone_transform_mat is missing (zero size): initialize
+     missing matrix, i.e. #skinning_weights (or #bone_transform_mat)
+                  - Both #skinning_weights and #bone_transform_mat are missing (zero size): initialize both with
+     rigid skinning using approximately #num_bones bones, i.e. values of #skinning_weights are 0 or 1.
+                  LBG-VQ clustering is peformed using mesh sequence #vertex, rest
+     pose geometries #rest_pose_geometry and topology #fv.
+                  @b Note: as the initialization does not use exactly #num_bones bones,
+     the value of #num_bones could be changed when both #skinning_weights and #bone_transform_mat are missing.
 
           This function is called at the begining of every compute update
      functions as a safeguard.
@@ -211,63 +211,63 @@ public:
 	void init() {
 		if (modelSize < 0)
 			modelSize =
-					sqrt((u - (u.rowwise().sum() / nV).replicate(1, nV)).squaredNorm() /
-							nV / nS);
-		if (laplacian.cols() != nV)
+					sqrt((rest_pose_geometry - (rest_pose_geometry.rowwise().sum() / num_vertices).replicate(1, num_vertices)).squaredNorm() /
+							num_vertices / num_subjects);
+		if (laplacian.cols() != num_vertices)
 			computeSmoothSolver();
 
-		if (((int)w.rows() != nB) || ((int)w.cols() != nV)) { // No skinning weight
-			if (((int)m.rows() != nF * 4) ||
-					((int)m.cols() != nB * 4)) { // No transformation
-				int targetNB = nB;
+		if (((int)skinning_weights.rows() != num_bones) || ((int)skinning_weights.cols() != num_vertices)) { // No skinning weight
+			if (((int)bone_transform_mat.rows() != num_total_frames * 4) ||
+					((int)bone_transform_mat.cols() != num_bones * 4)) { // No transformation
+				int targetNB = num_bones;
 				// LBG-VQ
-				nB = 1;
-				label = Eigen::VectorXi::Zero(nV);
+				num_bones = 1;
+				label = Eigen::VectorXi::Zero(num_vertices);
 				computeTransFromLabel();
 
 				bool cont = true;
 				while (cont) {
 					cbInitSplitBegin();
-					int prev = nB;
+					int prev = num_bones;
 					split(targetNB, 3);
 					for (int rep = 0; rep < nInitIters; rep++) {
 						computeTransFromLabel();
 						computeLabel();
 						pruneBones(3);
 					}
-					cont = (nB < targetNB) && (nB > prev);
+					cont = (num_bones < targetNB) && (num_bones > prev);
 					cbInitSplitEnd();
 				}
-				lockM = Eigen::VectorXi::Zero(nB);
+				lock_mat = Eigen::VectorXi::Zero(num_bones);
 				labelToWeights();
 			} else
 				initWeights(); // Has transformations
 		} else { // Has skinning weights
-			if (((int)m.rows() != nF * 4) ||
-					((int)m.cols() != nB * 4)) { // No transformation
-				m = Matrix4::Identity().replicate(nF, nB);
-				lockM = Eigen::VectorXi::Zero(nB);
+			if (((int)bone_transform_mat.rows() != num_total_frames * 4) ||
+					((int)bone_transform_mat.cols() != num_bones * 4)) { // No transformation
+				bone_transform_mat = Matrix4::Identity().replicate(num_total_frames, num_bones);
+				lock_mat = Eigen::VectorXi::Zero(num_bones);
 			}
 		}
 
-		if (lockW.size() != nV)
-			lockW = VectorX::Zero(nV);
-		if (lockM.size() != nB)
-			lockM = Eigen::VectorXi::Zero(nB);
+		if (lock_weight.size() != num_vertices)
+			lock_weight = VectorX::Zero(num_vertices);
+		if (lock_mat.size() != num_bones)
+			lock_mat = Eigen::VectorXi::Zero(num_bones);
 	}
 
 	/** @brief Update bone transformations by running #nTransIters iterations with
      #transAffine and #transAffineNorm regularizers
           @details Required input data:
-                  - Rest shapes: #u, #fv, #nV
-                  - Sequence: #v, #nF, #fStart, #subjectID, #nS
-                  - Number of bones: #nB
+                  - Rest shapes: #rest_pose_geometry, #fv, #num_vertices
+                  - Sequence: #vertex, #num_total_frames, #frame_start_index, #frame_subject_id, #num_subjects
+                  - Number of bones: #num_bones
 
           Optional input data:
-                  - Skinning weights: #w, #lockW
-                  - Bone transformations: #m, #lockM
+                  - Skinning weights: #skinning_weights, #lock_weight
+                  - Bone transformations: #bone_transform_mat, #lock_mat
 
-          Output: #m. Missing #w and/or #m (with zero size) will be initialized
+          Output: #bone_transform_mat. Missing #skinning_weights and/or #bone_transform_mat (with zero size) will be initialized
      by init().
   */
 	void computeTranformations() {
@@ -284,14 +284,14 @@ public:
 				_iterTransformations++) {
 			cbTransformationsIterBegin();
 			// #pragma omp parallel for
-			for (int k = 0; k < nF; k++)
-				for (int j = 0; j < nB; j++)
-					if (lockM(j) == 0) {
+			for (int k = 0; k < num_total_frames; k++)
+				for (int j = 0; j < num_bones; j++)
+					if (lock_mat(j) == 0) {
 						Matrix4 qpT = vuT.blk4(k, j);
 						for (int it = uuT.outerIdx(j); it < uuT.outerIdx(j + 1); it++)
 							if (uuT.innerIdx(it) != j)
-								qpT -= m.blk4(k, uuT.innerIdx(it)) *
-									   uuT.val.blk4(subjectID(k), it);
+								qpT -= bone_transform_mat.blk4(k, uuT.innerIdx(it)) *
+									   uuT.val.blk4(frame_subject_id(k), it);
 						qpT2m(qpT, k, j);
 					}
 			if (cbTransformationsIterEnd())
@@ -304,15 +304,15 @@ public:
 	/** @brief Update skinning weights by running #nWeightsIters iterations with
      #weightsSmooth and #weightsSmoothStep regularizers
           @details Required input data:
-                  - Rest shapes: #u, #fv, #nV
-                  - Sequence: #v, #nF, #fStart, #subjectID, #nS
-                  - Number of bones: #nB
+                  - Rest shapes: #rest_pose_geometry, #fv, #num_vertices
+                  - Sequence: #vertex, #num_total_frames, #frame_start_index, #frame_subject_id, #num_subjects
+                  - Number of bones: #num_bones
 
           Optional input data:
-                  - Skinning weights: #w, #lockW
-                  - Bone transformations: #m, #lockM
+                  - Skinning weights: #skinning_weights, #lock_weight
+                  - Bone transformations: #bone_transform_mat, #lock_mat
 
-          Output: #w. Missing #w and/or #m (with zero size) will be initialized
+          Output: #skinning_weights. Missing #skinning_weights and/or #bone_transform_mat (with zero size) will be initialized
      by init().
 
   */
@@ -325,10 +325,10 @@ public:
 
 		compute_mTm();
 
-		aTb = MatrixX::Zero(nB, nV);
+		aTb = MatrixX::Zero(num_bones, num_vertices);
 		wSolver.init(nnz);
 		std::vector<Triplet, Eigen::aligned_allocator<Triplet>> trip;
-		trip.reserve(nV * nnz);
+		trip.reserve(num_vertices * nnz);
 
 		for (_iterWeights = 0; _iterWeights < nWeightsIters; _iterWeights++) {
 			cbWeightsIterBegin();
@@ -336,30 +336,30 @@ public:
 			compute_ws();
 			compute_aTb();
 
-			double reg_scale = pow(modelSize, 2) * nF;
+			double reg_scale = pow(modelSize, 2) * num_total_frames;
 
 			trip.clear();
 			// #pragma omp parallel for
-			for (int i = 0; i < nV; i++) {
+			for (int i = 0; i < num_vertices; i++) {
 				MatrixX aTai;
 				compute_aTa(i, aTai);
-				aTai = (1 - lockW(i)) *
+				aTai = (1 - lock_weight(i)) *
 							   (aTai / reg_scale + (weightsSmooth - weightsSparseness) *
-														   MatrixX::Identity(nB, nB)) +
-					   lockW(i) * MatrixX::Identity(nB, nB);
-				VectorX aTbi = (1 - lockW(i)) * (aTb.col(i) / reg_scale +
+														   MatrixX::Identity(num_bones, num_bones)) +
+					   lock_weight(i) * MatrixX::Identity(num_bones, num_bones);
+				VectorX aTbi = (1 - lock_weight(i)) * (aTb.col(i) / reg_scale +
 														weightsSmooth * ws.col(i)) +
-							   lockW(i) * w.col(i);
+							   lock_weight(i) * skinning_weights.col(i);
 
-				VectorX x = (1 - lockW(i)) * ws.col(i) + lockW(i) * w.col(i);
-				Eigen::ArrayXi idx = Eigen::ArrayXi::LinSpaced(nB, 0, nB - 1);
-				std::sort(idx.data(), idx.data() + nB,
+				VectorX x = (1 - lock_weight(i)) * ws.col(i) + lock_weight(i) * skinning_weights.col(i);
+				Eigen::ArrayXi idx = Eigen::ArrayXi::LinSpaced(num_bones, 0, num_bones - 1);
+				std::sort(idx.data(), idx.data() + num_bones,
 						[&x](int i1, int i2) { return x(i1) > x(i2); });
-				int nnzi = std::min(nnz, nB);
+				int nnzi = std::min(nnz, num_bones);
 				while (x(idx(nnzi - 1)) < weightEps)
 					nnzi--;
 
-				VectorX x0 = w.col(i).toDense().cwiseMax(0.0);
+				VectorX x0 = skinning_weights.col(i).toDense().cwiseMax(0.0);
 				x = indexing_vector(x0, idx.head(nnzi));
 				_Scalar s = x.sum();
 				if (s > _Scalar(0.1))
@@ -376,8 +376,8 @@ public:
 						trip.push_back(Triplet(idx[j], i, x(j)));
 			}
 
-			w.resize(nB, nV);
-			w.setFromTriplets(trip.begin(), trip.end());
+			skinning_weights.resize(num_bones, num_vertices);
+			skinning_weights.setFromTriplets(trip.begin(), trip.end());
 
 			if (cbWeightsIterEnd())
 				return;
@@ -389,15 +389,15 @@ public:
 	/** @brief Skinning decomposition by #nIters iterations of alternative
      updating weights and bone transformations
           @details Required input data:
-                  - Rest shapes: #u, #fv, #nV
-                  - Sequence: #v, #nF, #fStart, #subjectID, #nS
-                  - Number of bones: #nB
+                  - Rest shapes: #rest_pose_geometry, #fv, #num_vertices
+                  - Sequence: #vertex, #num_total_frames, #frame_start_index, #frame_subject_id, #num_subjects
+                  - Number of bones: #num_bones
 
           Optional input data:
-                  - Skinning weights: #w
-                  - Bone transformations: #m
+                  - Skinning weights: #skinning_weights
+                  - Bone transformations: #bone_transform_mat
 
-          Output: #w, #m. Missing #w and/or #m (with zero size) will be
+          Output: #skinning_weights, #bone_transform_mat. Missing #skinning_weights and/or #bone_transform_mat (with zero size) will be
      initialized by init().
   */
 	void compute() {
@@ -416,22 +416,22 @@ public:
 	_Scalar rmse() {
 		_Scalar e = 0;
 		// #pragma omp parallel for
-		for (int i = 0; i < nV; i++) {
+		for (int i = 0; i < num_vertices; i++) {
 			_Scalar ei = 0;
 			Matrix4 mki;
-			for (int k = 0; k < nF; k++) {
+			for (int k = 0; k < num_total_frames; k++) {
 				mki.setZero();
-				for (typename SparseMatrix::InnerIterator it(w, i); it; ++it)
-					mki += it.value() * m.blk4(k, it.row());
-				ei += (mki.template topLeftCorner<3, 3>() * u.vec3(subjectID(k), i) +
+				for (typename SparseMatrix::InnerIterator it(skinning_weights, i); it; ++it)
+					mki += it.value() * bone_transform_mat.blk4(k, it.row());
+				ei += (mki.template topLeftCorner<3, 3>() * rest_pose_geometry.vec3(frame_subject_id(k), i) +
 						mki.template topRightCorner<3, 1>() -
-						v.vec3(k, i).template cast<_Scalar>())
+						vertex.vec3(k, i).template cast<_Scalar>())
 							  .squaredNorm();
 			}
 			// #pragma omp atomic
 			e += ei;
 		}
-		return std::sqrt(e / nF / nV);
+		return std::sqrt(e / num_total_frames / num_vertices);
 	}
 
 	//! Callback function invoked before each spliting of bone clusters in
@@ -488,10 +488,10 @@ private:
 					Eigen::ComputeFullU | Eigen::ComputeFullV);
 			Matrix3 d = Matrix3::Identity();
 			d(2, 2) = (svd.matrixU() * svd.matrixV().transpose()).determinant();
-			m.rotMat(k, j) = svd.matrixU() * d * svd.matrixV().transpose();
-			m.transVec(k, j) =
+			bone_transform_mat.rotMat(k, j) = svd.matrixU() * d * svd.matrixV().transpose();
+			bone_transform_mat.transVec(k, j) =
 					qpT.template topRightCorner<3, 1>() -
-					m.rotMat(k, j) * qpT.template bottomLeftCorner<1, 3>().transpose();
+					bone_transform_mat.rotMat(k, j) * qpT.template bottomLeftCorner<1, 3>().transpose();
 		}
 	}
 
@@ -502,10 +502,10 @@ private:
 	_Scalar errorVtxBone(int i, int j, bool par = true) {
 		_Scalar e = 0;
 		// #pragma omp parallel for if (par)
-		for (int k = 0; k < nF; k++)
+		for (int k = 0; k < num_total_frames; k++)
 			// #pragma omp atomic
-			e += (m.rotMat(k, j) * u.vec3(subjectID(k), i) + m.transVec(k, j) -
-					v.vec3(k, i).template cast<_Scalar>())
+			e += (bone_transform_mat.rotMat(k, j) * rest_pose_geometry.vec3(frame_subject_id(k), i) + bone_transform_mat.transVec(k, j) -
+					vertex.vec3(k, i).template cast<_Scalar>())
 						 .squaredNorm();
 		return e;
 	}
@@ -523,11 +523,11 @@ private:
 	/** Update labels of vertices
    */
 	void computeLabel() {
-		VectorX ei(nV);
-		Eigen::VectorXi seed = Eigen::VectorXi::Constant(nB, -1);
-		VectorX gLabelMin(nB);
+		VectorX ei(num_vertices);
+		Eigen::VectorXi seed = Eigen::VectorXi::Constant(num_bones, -1);
+		VectorX gLabelMin(num_bones);
 		// #pragma omp parallel for
-		for (int i = 0; i < nV; i++) {
+		for (int i = 0; i < num_vertices; i++) {
 			int j = label(i);
 			if (j != -1) {
 				ei(i) = errorVtxBone(i, j, false);
@@ -545,14 +545,14 @@ private:
 				std::vector<Triplet, Eigen::aligned_allocator<Triplet>>,
 				TripletLess>
 				heap;
-		for (int j = 0; j < nB; j++)
+		for (int j = 0; j < num_bones; j++)
 			if (seed(j) != -1)
 				heap.push(Triplet(j, seed(j), ei(seed(j))));
 
-		if (laplacian.cols() != nV)
+		if (laplacian.cols() != num_vertices)
 			computeSmoothSolver();
 
-		std::vector<bool> dirty(nV, true);
+		std::vector<bool> dirty(num_vertices, true);
 		while (!heap.empty()) {
 			Triplet top = heap.top();
 			heap.pop();
@@ -573,10 +573,10 @@ private:
 		}
 
 		// #pragma omp parallel for
-		for (int i = 0; i < nV; i++)
+		for (int i = 0; i < num_vertices; i++)
 			if (label(i) == -1) {
 				_Scalar gMin;
-				for (int j = 0; j < nB; j++) {
+				for (int j = 0; j < num_bones; j++) {
 					_Scalar ej = errorVtxBone(i, j, false);
 					if ((label(i) == -1) || (gMin > ej)) {
 						gMin = ej;
@@ -589,29 +589,29 @@ private:
 	/** Update bone transformation from label
    */
 	void computeTransFromLabel() {
-		m = Matrix4::Identity().replicate(nF, nB);
+		bone_transform_mat = Matrix4::Identity().replicate(num_total_frames, num_bones);
 		// #pragma omp parallel for
-		for (int k = 0; k < nF; k++) {
-			MatrixX qpT = MatrixX::Zero(4, 4 * nB);
-			for (int i = 0; i < nV; i++)
+		for (int k = 0; k < num_total_frames; k++) {
+			MatrixX qpT = MatrixX::Zero(4, 4 * num_bones);
+			for (int i = 0; i < num_vertices; i++)
 				if (label(i) != -1)
 					qpT.blk4(0, label(i)) +=
-							Vector4(v.vec3(k, i).template cast<_Scalar>().homogeneous()) *
-							u.vec3(subjectID(k), i).homogeneous().transpose();
-			for (int j = 0; j < nB; j++)
+							Vector4(vertex.vec3(k, i).template cast<_Scalar>().homogeneous()) *
+							rest_pose_geometry.vec3(frame_subject_id(k), i).homogeneous().transpose();
+			for (int j = 0; j < num_bones; j++)
 				qpT2m(qpT.blk4(0, j), k, j);
 		}
 	}
 
-	/** Set matrix w from label
+	/** Set matrix skinning_weights from label
    */
 	void labelToWeights() {
-		std::vector<Triplet, Eigen::aligned_allocator<Triplet>> trip(nV);
-		for (int i = 0; i < nV; i++)
+		std::vector<Triplet, Eigen::aligned_allocator<Triplet>> trip(num_vertices);
+		for (int i = 0; i < num_vertices; i++)
 			trip[i] = Triplet(label(i), i, _Scalar(1));
-		w.resize(nB, nV);
-		w.setFromTriplets(trip.begin(), trip.end());
-		lockW = VectorX::Zero(nV);
+		skinning_weights.resize(num_bones, num_vertices);
+		skinning_weights.setFromTriplets(trip.begin(), trip.end());
+		lock_weight = VectorX::Zero(num_vertices);
 	}
 
 	/** Split bone clusters
@@ -621,26 +621,26 @@ private:
   */
 	void split(int maxB, int threshold) {
 		// Centroids
-		MatrixX cu = MatrixX::Zero(3 * nS, nB);
-		Eigen::VectorXi s = Eigen::VectorXi::Zero(nB);
-		for (int i = 0; i < nV; i++) {
-			cu.col(label(i)) += u.col(i);
+		MatrixX cu = MatrixX::Zero(3 * num_subjects, num_bones);
+		Eigen::VectorXi s = Eigen::VectorXi::Zero(num_bones);
+		for (int i = 0; i < num_vertices; i++) {
+			cu.col(label(i)) += rest_pose_geometry.col(i);
 			s(label(i))++;
 		}
-		for (int j = 0; j < nB; j++)
+		for (int j = 0; j < num_bones; j++)
 			if (s(j) != 0)
 				cu.col(j) /= _Scalar(s(j));
 
 		// Distance to centroid & error
-		VectorX d(nV), e(nV);
-		VectorX minD = VectorX::Constant(nB, std::numeric_limits<_Scalar>::max());
-		VectorX minE = VectorX::Constant(nB, std::numeric_limits<_Scalar>::max());
-		VectorX ce = VectorX::Zero(nB);
+		VectorX d(num_vertices), e(num_vertices);
+		VectorX minD = VectorX::Constant(num_bones, std::numeric_limits<_Scalar>::max());
+		VectorX minE = VectorX::Constant(num_bones, std::numeric_limits<_Scalar>::max());
+		VectorX ce = VectorX::Zero(num_bones);
 
 		// #pragma omp parallel for
-		for (int i = 0; i < nV; i++) {
+		for (int i = 0; i < num_vertices; i++) {
 			int j = label(i);
-			d(i) = (u.col(i) - cu.col(j)).norm();
+			d(i) = (rest_pose_geometry.col(i) - cu.col(j)).norm();
 			e(i) = sqrt(errorVtxBone(i, j, false));
 			if (d(i) < minD(j)) {
 				// #pragma omp critical
@@ -655,11 +655,11 @@ private:
 		}
 
 		// Seed
-		Eigen::VectorXi seed = Eigen::VectorXi::Constant(nB, -1);
-		VectorX gMax(nB);
+		Eigen::VectorXi seed = Eigen::VectorXi::Constant(num_bones, -1);
+		VectorX gMax(num_bones);
 
 		// #pragma omp parallel for
-		for (int i = 0; i < nV; i++) {
+		for (int i = 0; i < num_vertices; i++) {
 			int j = label(i);
 			double tmp = abs((e(i) - minE(j)) * (d(i) - minD(j)));
 
@@ -672,9 +672,9 @@ private:
 			}
 		}
 
-		int countID = nB;
-		_Scalar avgErr = ce.sum() / nB;
-		for (int j = 0; j < nB; j++)
+		int countID = num_bones;
+		_Scalar avgErr = ce.sum() / num_bones;
+		for (int j = 0; j < num_bones; j++)
 			if ((countID < maxB) && (s(j) > threshold * 2) &&
 					(ce(j) > avgErr / 100)) {
 				int newLabel = countID++;
@@ -682,53 +682,53 @@ private:
 				for (typename SparseMatrix::InnerIterator it(laplacian, i); it; ++it)
 					label(it.row()) = newLabel;
 			}
-		nB = countID;
+		num_bones = countID;
 	}
 
 	/** Remove bones with small number of associated vertices
           @param threshold is the minimum number of vertices assigned to a bone
   */
 	void pruneBones(int threshold) {
-		Eigen::VectorXi s = Eigen::VectorXi::Zero(nB);
+		Eigen::VectorXi s = Eigen::VectorXi::Zero(num_bones);
 		// #pragma omp parallel for
-		for (int i = 0; i < nV; i++) {
+		for (int i = 0; i < num_vertices; i++) {
 			// #pragma omp atomic
 			s(label(i))++;
 		}
 
-		Eigen::VectorXi newID(nB);
+		Eigen::VectorXi newID(num_bones);
 		int countID = 0;
-		for (int j = 0; j < nB; j++)
+		for (int j = 0; j < num_bones; j++)
 			if (s(j) < threshold)
 				newID(j) = -1;
 			else
 				newID(j) = countID++;
 
-		if (countID == nB)
+		if (countID == num_bones)
 			return;
 
-		for (int j = 0; j < nB; j++)
+		for (int j = 0; j < num_bones; j++)
 			if (newID(j) != -1)
-				m.template middleCols<4>(newID(j) * 4) =
-						m.template middleCols<4>(j * 4);
+				bone_transform_mat.template middleCols<4>(newID(j) * 4) =
+						bone_transform_mat.template middleCols<4>(j * 4);
 
 		// #pragma omp parallel for
-		for (int i = 0; i < nV; i++)
+		for (int i = 0; i < num_vertices; i++)
 			label(i) = newID(label(i));
 
-		nB = countID;
-		m.conservativeResize(nF * 4, nB * 4);
+		num_bones = countID;
+		bone_transform_mat.conservativeResize(num_total_frames * 4, num_bones * 4);
 		computeLabel();
 	}
 
 	/** Initialize skinning weights with rigid bind to the best bone
    */
 	void initWeights() {
-		label = Eigen::VectorXi::Constant(nV, -1);
+		label = Eigen::VectorXi::Constant(num_vertices, -1);
 		// #pragma omp parallel for
-		for (int i = 0; i < nV; i++) {
+		for (int i = 0; i < num_vertices; i++) {
 			_Scalar gMin;
-			for (int j = 0; j < nB; j++) {
+			for (int j = 0; j < num_bones; j++) {
 				_Scalar ej = errorVtxBone(i, j, false);
 				if ((label(i) == -1) || (gMin > ej)) {
 					gMin = ej;
@@ -740,26 +740,26 @@ private:
 		labelToWeights();
 	}
 
-	//! vuT.blk4(k, j) = \sum_{i=0}^{nV-1}  w(j, i)*v.vec3(k,
-	//! i).homogeneous()*u.vec3(subjectID(k), i).homogeneous()^T
+	//! vuT.blk4(k, j) = \sum_{i=0}^{num_vertices-1}  skinning_weights(j, i)*vertex.vec3(k,
+	//! i).homogeneous()*rest_pose_geometry.vec3(frame_subject_id(k), i).homogeneous()^T
 	MatrixX vuT;
 
 	/** Pre-compute vuT with bone translations affinity soft constraint
    */
 	void compute_vuT() {
-		vuT = MatrixX::Zero(nF * 4, nB * 4);
+		vuT = MatrixX::Zero(num_total_frames * 4, num_bones * 4);
 		// #pragma omp parallel for
-		for (int k = 0; k < nF; k++) {
-			MatrixX vuTp = MatrixX::Zero(4, nB * 4);
-			for (int i = 0; i < nV; i++)
-				for (typename SparseMatrix::InnerIterator it(w, i); it; ++it) {
+		for (int k = 0; k < num_total_frames; k++) {
+			MatrixX vuTp = MatrixX::Zero(4, num_bones * 4);
+			for (int i = 0; i < num_vertices; i++)
+				for (typename SparseMatrix::InnerIterator it(skinning_weights, i); it; ++it) {
 					Matrix4 tmp =
-							Vector4(v.vec3(k, i).template cast<_Scalar>().homogeneous()) *
-							u.vec3(subjectID(k), i).homogeneous().transpose();
+							Vector4(vertex.vec3(k, i).template cast<_Scalar>().homogeneous()) *
+							rest_pose_geometry.vec3(frame_subject_id(k), i).homogeneous().transpose();
 					vuT.blk4(k, it.row()) += it.value() * tmp;
 					vuTp.blk4(0, it.row()) += pow(it.value(), transAffineNorm) * tmp;
 				}
-			for (int j = 0; j < nB; j++)
+			for (int j = 0; j < num_bones; j++)
 				if (vuTp(3, j * 4 + 3) != 0)
 					vuT.blk4(k, j) +=
 							(transAffine * vuT(k * 4 + 3, j * 4 + 3) / vuTp(3, j * 4 + 3)) *
@@ -768,8 +768,8 @@ private:
 	}
 
 	//! uuT is a sparse block matrix, uuT(j, k).block<4, 4>(s*4, 0) =
-	//! \sum{i=0}{nV-1} w(j, i)*w(k,
-	//! i)*u.col(i).segment<3>(s*3).homogeneous().transpose()*u.col(i).segment<3>(s*3).homogeneous()
+	//! \sum{i=0}{num_vertices-1} skinning_weights(j, i)*skinning_weights(k,
+	//! i)*rest_pose_geometry.col(i).segment<3>(s*3).homogeneous().transpose()*rest_pose_geometry.col(i).segment<3>(s*3).homogeneous()
 	struct SparseMatrixBlock {
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 		MatrixX val;
@@ -779,102 +779,102 @@ private:
 	/** Pre-compute uuT for bone transformations update
    */
 	void compute_uuT() {
-		Eigen::MatrixXi pos = Eigen::MatrixXi::Constant(nB, nB, -1);
+		Eigen::MatrixXi pos = Eigen::MatrixXi::Constant(num_bones, num_bones, -1);
 		// #pragma omp parallel for
-		for (int i = 0; i < nV; i++)
-			for (typename SparseMatrix::InnerIterator it(w, i); it; ++it)
-				for (typename SparseMatrix::InnerIterator jt(w, i); jt; ++jt)
+		for (int i = 0; i < num_vertices; i++)
+			for (typename SparseMatrix::InnerIterator it(skinning_weights, i); it; ++it)
+				for (typename SparseMatrix::InnerIterator jt(skinning_weights, i); jt; ++jt)
 					pos(it.row(), jt.row()) = 1;
 
-		uuT.outerIdx.resize(nB + 1);
-		uuT.innerIdx.resize(nB * nB);
+		uuT.outerIdx.resize(num_bones + 1);
+		uuT.innerIdx.resize(num_bones * num_bones);
 		int nnz = 0;
-		for (int j = 0; j < nB; j++) {
+		for (int j = 0; j < num_bones; j++) {
 			uuT.outerIdx(j) = nnz;
-			for (int i = 0; i < nB; i++)
+			for (int i = 0; i < num_bones; i++)
 				if (pos(i, j) != -1) {
 					uuT.innerIdx(nnz) = i;
 					pos(i, j) = nnz++;
 				}
 		}
-		uuT.outerIdx(nB) = nnz;
+		uuT.outerIdx(num_bones) = nnz;
 		uuT.innerIdx.conservativeResize(nnz);
-		uuT.val = MatrixX::Zero(nS * 4, nnz * 4);
+		uuT.val = MatrixX::Zero(num_subjects * 4, nnz * 4);
 
 		// #pragma omp parallel for
-		for (int i = 0; i < nV; i++)
-			for (typename SparseMatrix::InnerIterator it(w, i); it; ++it)
-				for (typename SparseMatrix::InnerIterator jt(w, i); jt; ++jt)
+		for (int i = 0; i < num_vertices; i++)
+			for (typename SparseMatrix::InnerIterator it(skinning_weights, i); it; ++it)
+				for (typename SparseMatrix::InnerIterator jt(skinning_weights, i); jt; ++jt)
 					if (it.row() >= jt.row()) {
 						double _w = it.value() * jt.value();
-						MatrixX _uuT(4 * nS, 4);
+						MatrixX _uuT(4 * num_subjects, 4);
 						Vector4 _u;
-						for (int s = 0; s < nS; s++) {
-							_u = u.vec3(s, i).homogeneous();
+						for (int s = 0; s < num_subjects; s++) {
+							_u = rest_pose_geometry.vec3(s, i).homogeneous();
 							_uuT.blk4(s, 0) = _w * _u * _u.transpose();
 						}
 						int p = pos(it.row(), jt.row()) * 4;
 						for (int c = 0; c < 4; c++)
-							for (int r = 0; r < 4 * nS; r++)
+							for (int r = 0; r < 4 * num_subjects; r++)
 								// #pragma omp atomic
 								uuT.val(r, p + c) += _uuT(r, c);
 					}
 
-		for (int i = 0; i < nB; i++)
-			for (int j = i + 1; j < nB; j++)
+		for (int i = 0; i < num_bones; i++)
+			for (int j = i + 1; j < num_bones; j++)
 				if (pos(i, j) != -1)
 					uuT.val.middleCols(pos(i, j) * 4, 4) =
 							uuT.val.middleCols(pos(j, i) * 4, 4);
 	}
 
-	//! mTm.size = (4*nS*nB, 4*nB), where mTm.block<4, 4>(s*nB+i, j) =
-	//! \sum_{k=fStart(s)}^{fStart(s+1)-1} m.block<3, 4>(k*4, i*4)^T*m.block<3,
+	//! mTm.size = (4*num_subjects*num_bones, 4*num_bones), where mTm.block<4, 4>(s*num_bones+i, j) =
+	//! \sum_{k=frame_start_index(s)}^{frame_start_index(s+1)-1} bone_transform_mat.block<3, 4>(k*4, i*4)^T*bone_transform_mat.block<3,
 	//! 4>(k*4, j*4)
 	MatrixX mTm;
 
 	/** Pre-compute mTm for weights update
    */
 	void compute_mTm() {
-		Eigen::MatrixXi idx(2, nB * (nB + 1) / 2);
+		Eigen::MatrixXi idx(2, num_bones * (num_bones + 1) / 2);
 		int nPairs = 0;
-		for (int i = 0; i < nB; i++)
-			for (int j = i; j < nB; j++) {
+		for (int i = 0; i < num_bones; i++)
+			for (int j = i; j < num_bones; j++) {
 				idx(0, nPairs) = i;
 				idx(1, nPairs) = j;
 				nPairs++;
 			}
 
-		mTm = MatrixX::Zero(nS * nB * 4, nB * 4);
+		mTm = MatrixX::Zero(num_subjects * num_bones * 4, num_bones * 4);
 		// #pragma omp parallel for
 		for (int p = 0; p < nPairs; p++) {
 			int i = idx(0, p);
 			int j = idx(1, p);
-			for (int k = 0; k < nF; k++)
-				mTm.blk4(subjectID(k) * nB + i, j) +=
-						m.blk4(k, i).template topRows<3>().transpose() *
-						m.blk4(k, j).template topRows<3>();
+			for (int k = 0; k < num_total_frames; k++)
+				mTm.blk4(frame_subject_id(k) * num_bones + i, j) +=
+						bone_transform_mat.blk4(k, i).template topRows<3>().transpose() *
+						bone_transform_mat.blk4(k, j).template topRows<3>();
 			if (i != j)
-				for (int s = 0; s < nS; s++)
-					mTm.blk4(s * nB + j, i) = mTm.blk4(s * nB + i, j);
+				for (int s = 0; s < num_subjects; s++)
+					mTm.blk4(s * num_bones + j, i) = mTm.blk4(s * num_bones + i, j);
 		}
 	}
 
-	//! aTb.col(i) is the A^Tb for vertex i, where A.size = (3*nF, nB),
+	//! aTb.col(i) is the A^Tb for vertex i, where A.size = (3*num_total_frames, num_bones),
 	//! A.col(j).segment<3>(f*3) is the transformed position of vertex i by bone j
-	//! at frame f, b = v.col(i).
+	//! at frame f, b = vertex.col(i).
 	MatrixX aTb;
 
 	/** Pre-compute aTb for weights update
    */
 	void compute_aTb() {
 		// #pragma omp parallel for
-		for (int i = 0; i < nV; i++)
-			for (int j = 0; j < nB; j++)
+		for (int i = 0; i < num_vertices; i++)
+			for (int j = 0; j < num_bones; j++)
 				if ((aTb(j, i) == 0) && (ws(j, i) > weightEps))
-					for (int k = 0; k < nF; k++)
-						aTb(j, i) += v.vec3(k, i).template cast<_Scalar>().dot(
-								m.blk4(k, j).template topRows<3>() *
-								u.vec3(subjectID(k), i).homogeneous());
+					for (int k = 0; k < num_total_frames; k++)
+						aTb(j, i) += vertex.vec3(k, i).template cast<_Scalar>().dot(
+								bone_transform_mat.blk4(k, j).template topRows<3>() *
+								rest_pose_geometry.vec3(frame_subject_id(k), i).homogeneous());
 	}
 
 	//! Size of the model=RMS distance to centroid
@@ -897,14 +897,14 @@ private:
 			for (int g = 0; g < nf; g++) {
 				int i = fv[f][g];
 				int j = fv[f][(g + 1) % nf];
-				epsDis += (u.col(i) - u.col(j)).norm();
+				epsDis += (rest_pose_geometry.col(i) - rest_pose_geometry.col(j)).norm();
 			}
 		}
-		epsDis = epsDis * weightEps / (_Scalar)nS;
+		epsDis = epsDis * weightEps / (_Scalar)num_subjects;
 
 		std::vector<Triplet, Eigen::aligned_allocator<Triplet>> triplet;
-		VectorX d = VectorX::Zero(nV);
-		std::vector<std::set<int>> isComputed(nV);
+		VectorX d = VectorX::Zero(num_vertices);
+		std::vector<std::set<int>> isComputed(num_vertices);
 
 		// #pragma omp parallel for
 		for (int f = 0; f < nFV; f++) {
@@ -923,16 +923,16 @@ private:
 
 				if (needCompute) {
 					double val = 0;
-					for (int s = 0; s < nS; s++) {
-						double du = (u.vec3(s, i) - u.vec3(s, j)).norm();
-						for (int k = fStart(s); k < fStart(s + 1); k++)
-							val += pow((v.vec3(k, i).template cast<_Scalar>() -
-											   v.vec3(k, j).template cast<_Scalar>())
+					for (int s = 0; s < num_subjects; s++) {
+						double du = (rest_pose_geometry.vec3(s, i) - rest_pose_geometry.vec3(s, j)).norm();
+						for (int k = frame_start_index(s); k < frame_start_index(s + 1); k++)
+							val += pow((vertex.vec3(k, i).template cast<_Scalar>() -
+											   vertex.vec3(k, j).template cast<_Scalar>())
 													   .norm() -
 											   du,
 									2);
 					}
-					val = 1 / (sqrt(val / nF) + epsDis);
+					val = 1 / (sqrt(val / num_total_frames) + epsDis);
 
 					// #pragma omp critical
 					triplet.push_back(Triplet(i, j, -val));
@@ -947,18 +947,18 @@ private:
 			}
 		}
 
-		for (int i = 0; i < nV; i++)
+		for (int i = 0; i < num_vertices; i++)
 			triplet.push_back(Triplet(i, i, d(i)));
 
-		laplacian.resize(nV, nV);
+		laplacian.resize(num_vertices, num_vertices);
 		laplacian.setFromTriplets(triplet.begin(), triplet.end());
 
-		for (int i = 0; i < nV; i++)
+		for (int i = 0; i < num_vertices; i++)
 			if (d(i) != 0)
 				laplacian.row(i) /= d(i);
 
 		laplacian = weightsSmoothStep * laplacian +
-					SparseMatrix((VectorX::Ones(nV)).asDiagonal());
+					SparseMatrix((VectorX::Ones(num_vertices)).asDiagonal());
 		smoothSolver.compute(laplacian);
 	}
 
@@ -968,18 +968,18 @@ private:
 	/** Implicit skinning weights Laplacian smoothing
    */
 	void compute_ws() {
-		ws = w.transpose();
+		ws = skinning_weights.transpose();
 		// #pragma omp parallel for
-		for (int j = 0; j < nB; j++)
+		for (int j = 0; j < num_bones; j++)
 			ws.col(j) = smoothSolver.solve(ws.col(j));
 		ws.transposeInPlace();
 
 		// #pragma omp parallel for
-		for (int i = 0; i < nV; i++) {
+		for (int i = 0; i < num_vertices; i++) {
 			ws.col(i) = ws.col(i).cwiseMax(0.0);
 			_Scalar si = ws.col(i).sum();
 			if (si < _Scalar(0.1))
-				ws.col(i) = VectorX::Constant(nB, _Scalar(1) / nB);
+				ws.col(i) = VectorX::Constant(num_bones, _Scalar(1) / num_bones);
 			else
 				ws.col(i) /= si;
 		}
@@ -991,16 +991,16 @@ private:
 	/** Pre-compute aTa for weights update on one vertex
           @param i is the vertex index.
           @param aTa is the by-reference output of A^TA for vertex i, where
-     A.size = (3*nF, nB), A.col(j).segment<3>(f*3) is the transformed position
+     A.size = (3*num_total_frames, num_bones), A.col(j).segment<3>(f*3) is the transformed position
      of vertex i by bone j at frame f.
   */
 	void compute_aTa(int i, MatrixX &aTa) {
-		aTa = MatrixX::Zero(nB, nB);
-		for (int j1 = 0; j1 < nB; j1++)
-			for (int j2 = j1; j2 < nB; j2++) {
-				for (int s = 0; s < nS; s++)
-					aTa(j1, j2) += u.vec3(s, i).homogeneous().dot(
-							mTm.blk4(s * nB + j1, j2) * u.vec3(s, i).homogeneous());
+		aTa = MatrixX::Zero(num_bones, num_bones);
+		for (int j1 = 0; j1 < num_bones; j1++)
+			for (int j2 = j1; j2 < num_bones; j2++) {
+				for (int s = 0; s < num_subjects; s++)
+					aTa(j1, j2) += rest_pose_geometry.vec3(s, i).homogeneous().dot(
+							mTm.blk4(s * num_bones + j1, j2) * rest_pose_geometry.vec3(s, i).homogeneous());
 				if (j1 != j2)
 					aTa(j2, j1) = aTa(j1, j2);
 			}
