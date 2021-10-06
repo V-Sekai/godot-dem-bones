@@ -380,7 +380,7 @@ public:
 		const int iteration_max = 100;
 		double tolerance = 0.0;
 		int patience = 3;
-		DemBonesExt<double, float>::compute();
+		DemBonesExt<_Scalar, _AniMeshScalar>::compute();
 		double prevErr = -1;
 		int np = 3;
 		for (int32_t iteration = 0; iteration < iteration_max; iteration++) {
