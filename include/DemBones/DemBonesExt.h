@@ -456,11 +456,10 @@ public:
 			}
 		}
 
-		vertex.resize(3, num_vertices * num_total_frames);
-		rest_pose_geometry.resize(num_subjects * 3, num_vertices);
 		{
 			PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
 			num_vertices = vertex_arrays.size();
+		    rest_pose_geometry.resize(num_subjects * 3, num_vertices);
 			for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
 					vertex_i++) {
 				float pos_x = vertex_arrays[vertex_i].x;
@@ -469,6 +468,7 @@ public:
 				rest_pose_geometry.col(vertex_i) << pos_x, pos_y, pos_z;
 			}
 		}
+		vertex.resize(3, num_vertices * num_total_frames);
 		for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
 			PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
 			for (int32_t blend_path_i = 0; blend_path_i < p_blend_paths.size(); blend_path_i++) {
