@@ -348,7 +348,7 @@ private:
 	};
 
 public:
-	Array convert(Array p_mesh, Array p_blends, Skeleton3D *p_skeleton,
+	Array convert(Array p_mesh, Array p_blends, Skeleton3D *p_skeleton, Vector<StringName> p_blend_paths, Vector<StringName> p_bone_paths,
 			Vector<Ref<Animation>> p_anims) {
 		if (!p_anims.size()) {
 			return Array();
@@ -364,11 +364,13 @@ public:
 
 		Map<StringName, Vector<TKey<TransformKey>>> transforms;
 		Map<StringName, Vector<TKey<BlendKey>>> blends;
+		float FPS = 30.0f;
+		// TODO: Optimize
 		for (int32_t track_i = 0; track_i < anim->get_track_count(); track_i++) {
 			String track_path = anim->track_get_path(track_i);
 			Animation::TrackType track_type = anim->track_get_type(track_i);
 			if (track_type == Animation::TYPE_TRANSFORM3D) {
-				const double increment = 1.0 / 30.0f;
+				const double increment = 1.0 / FPS;
 				double time = 0.0;
 				double length = anim->get_length();
 
@@ -405,7 +407,7 @@ public:
 					transforms.insert(track_path, transform_anims);
 				}
 			} else if (track_type == Animation::TYPE_VALUE) {
-				const double increment = 1.0 / 30.0f;
+				const double increment = 1.0 / FPS;
 				double time = 0.0;
 				double length = anim->get_length();
 
@@ -436,9 +438,23 @@ public:
 				blends.insert(track_path, blend_anims);
 			}
 		}
-
 		ERR_FAIL_NULL_V(p_skeleton, Array());
 		num_subjects = 1;
+		fTime.resize(FPS * anim->get_length());
+		num_total_frames = fTime.size();
+		frame_start_index.resize(num_subjects + 1);
+		frame_start_index(0) = 0;
+
+		for (int s = 0; s < num_subjects; s++) {
+			frame_start_index(s + 1) = frame_start_index(s) + fTime.size();
+		}
+
+		frame_subject_id.resize(num_total_frames);
+		for (int s = 0; s < num_subjects; s++) {
+			for (int k = frame_start_index(s); k < frame_start_index(s + 1); k++) {
+				frame_subject_id(k) = s;
+			}
+		}
 
 		PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
 
