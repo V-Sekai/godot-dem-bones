@@ -63,14 +63,8 @@ public:
 								surface_i++) {
 					        Map<StringName, Vector<Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::TransformKey>>> transforms;
 							Array surface_arrays = surface_mesh->surface_get_arrays(surface_i);
-							Array blends_arrays =
-									surface_mesh->surface_get_blend_shape_arrays(surface_i);
-							int32_t blend_vertex_count = blends_arrays[Mesh::ARRAY_VERTEX].size();
-							int32_t mesh_vertex_count = surface_arrays[Mesh::ARRAY_VERTEX].size();
-							if (blend_vertex_count == 0) {
-								continue;
-							}
-							int32_t new_blend_count = mesh_vertex_count / blend_vertex_count;
+							Array blends_arrays = surface_mesh->surface_get_blend_shape_arrays(surface_i);
+							int32_t new_blend_count = blends_arrays.size();
 							blend_count += new_blend_count;
 							Map<StringName, Vector<Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::BlendKey>>> blends;
 							NodePath mesh_track;
