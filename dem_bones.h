@@ -79,12 +79,12 @@ public:
 						}
 					}
 				}
-				int child_count = node->get_child_count();
-				for (int32_t i = 0; i < child_count; i++) {
-					queue.push_back(node->get_child(i));
-				}
-				queue.pop_front();
 			}
+			int child_count = node->get_child_count();
+			for (int32_t i = 0; i < child_count; i++) {
+				queue.push_back(node->get_child(i));
+			}
+			queue.pop_front();
 		}
 		return OK;
 	}
