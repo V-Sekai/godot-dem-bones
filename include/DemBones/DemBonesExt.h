@@ -459,17 +459,46 @@ public:
 		PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
 
 		num_vertices = vertex_arrays.size();
-		vertex.resize(3, num_vertices);
+		vertex.resize(3, num_vertices * num_total_frames);
+
+		rest_pose_geometry.resize(num_subjects * 3, num_vertices);
+
+		for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
+			for (int32_t blend_path_i = 0; blend_path_i < p_blend_paths.size(); blend_path_i++) {
+				String blend_path = p_blend_paths[blend_path_i];
+				if (!blends.has(blend_path)) {
+					continue;
+				}
+				// Vector<TKey<BlendKey>> keys = blends[blend_path];
+				// const Array &current_blend_array = p_blends[blend_path_i];
+				// const PackedVector3Array &blend = current_blend_array[Mesh::ARRAY_VERTEX];
+				// for (const TKey<BlendKey> &key : keys) {
+				// #pragma omp parallel for
+				for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
+						vertex_i++) {
+					// BlendKey blend_key = key.value;
+					float pos_x = vertex_arrays[vertex_i].x;
+					// float blend_pos_x = blend[vertex_i].x;
+					// pos_x = Math::lerp(pos_x, blend_pos_x, blend_key.weight);
+					float pos_y = vertex_arrays[vertex_i].y;
+					// float blend_pos_y = blend[vertex_i].y;
+					// pos_y = Math::lerp(pos_y, blend_pos_y, blend_key.weight);
+					float pos_z = vertex_arrays[vertex_i].z;
+					// float blend_pos_z = blend[vertex_i].z;
+					// pos_z = Math::lerp(pos_z, blend_pos_z, blend_key.weight);
+					vertex.col(vertex_i) << pos_x, pos_y, pos_z;
+				}
+				// }
+			}
+		}
 		rest_pose_geometry.resize(num_subjects * 3, num_vertices);
 		for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
 				vertex_i++) {
-			const float pos_x = vertex_arrays[vertex_i].x;
-			const float pos_y = vertex_arrays[vertex_i].y;
-			const float pos_z = vertex_arrays[vertex_i].z;
-			vertex.col(vertex_i) << pos_x, pos_y, pos_z;
+			float pos_x = vertex_arrays[vertex_i].x;
+			float pos_y = vertex_arrays[vertex_i].y;
+			float pos_z = vertex_arrays[vertex_i].z;
+			rest_pose_geometry.col(vertex_i) << pos_x, pos_y, pos_z;
 		}
-
-		// TODO: iFire 2021-10-05 Add frames
 
 		// TODO iFire 2021-04-20
 		// rest_pose_geometry.block(0, 0, 3, num_vertices) = vertex;
