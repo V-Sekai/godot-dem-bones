@@ -456,6 +456,7 @@ public:
 			}
 		}
 
+		rest_pose_geometry.resize(num_subjects * 3, num_vertices);
 		{
 			PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
 			num_vertices = vertex_arrays.size();
@@ -470,7 +471,7 @@ public:
 		}
 		vertex.resize(3, num_vertices * num_total_frames);
 		for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
-			PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
+			PackedVector3Array blend_vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
 			for (int32_t blend_path_i = 0; blend_path_i < p_blend_paths.size(); blend_path_i++) {
 				String blend_path = p_blend_paths[blend_path_i];
 				if (!blends.has(blend_path)) {
@@ -481,14 +482,14 @@ public:
 				const PackedVector3Array &blend = current_blend_array[Mesh::ARRAY_VERTEX];
 				for (const TKey<BlendKey> &key : keys) {
 					// #pragma omp parallel for
-					for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
+					for (int32_t vertex_i = 0; vertex_i < blend_vertex_arrays.size();
 							vertex_i++) {
 						BlendKey blend_key = key.value;
-						float &pos_x = vertex_arrays.write[vertex_i].x;
+						float &pos_x = blend_vertex_arrays.write[vertex_i].x;
 						const float &blend_pos_x = blend[vertex_i].x;
-						float &pos_y = vertex_arrays.write[vertex_i].y;
+						float &pos_y = blend_vertex_arrays.write[vertex_i].y;
 						const float &blend_pos_y = blend[vertex_i].y;
-						float &pos_z = vertex_arrays.write[vertex_i].z;
+						float &pos_z = blend_vertex_arrays.write[vertex_i].z;
 						const float &blend_pos_z = blend[vertex_i].z;
 						pos_x = Math::lerp(pos_x, blend_pos_x, blend_key.weight);
 						pos_y = Math::lerp(pos_y, blend_pos_y, blend_key.weight);
@@ -497,18 +498,14 @@ public:
 				}
 			}
 			// #pragma omp parallel for
-			for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
+			for (int32_t vertex_i = 0; vertex_i < blend_vertex_arrays.size();
 					vertex_i++) {
-				const float &pos_x = vertex_arrays.write[vertex_i].x;
-				const float &pos_y = vertex_arrays.write[vertex_i].y;
-				const float &pos_z = vertex_arrays.write[vertex_i].z;
+				const float &pos_x = blend_vertex_arrays.write[vertex_i].x;
+				const float &pos_y = blend_vertex_arrays.write[vertex_i].y;
+				const float &pos_z = blend_vertex_arrays.write[vertex_i].z;
 				vertex.col((vertex_i * frame_i) + vertex_i) << pos_x, pos_y, pos_z;
 			}
 		}
-		rest_pose_geometry.resize(num_subjects * 3, num_vertices);
-
-		// TODO iFire 2021-04-20
-		// rest_pose_geometry.block(0, 0, 3, num_vertices) = vertex;
 		PackedInt32Array indices = p_mesh[Mesh::ARRAY_INDEX];
 
 		// Assume triangles
@@ -517,9 +514,9 @@ public:
 		for (int32_t index_i = 0; index_i < indices.size(); index_i += 3) {
 			std::vector<int> polygon_indices;
 			polygon_indices.resize(indices_in_tri);
-			polygon_indices[index_i / 3 + 0] = indices[index_i / 3 + 0];
-			polygon_indices[index_i / 3 + 1] = indices[index_i / 3 + 1];
-			polygon_indices[index_i / 3 + 2] = indices[index_i / 3 + 2];
+			polygon_indices[0] = indices[index_i / 3 + 0];
+			polygon_indices[1] = indices[index_i / 3 + 1];
+			polygon_indices[2] = indices[index_i / 3 + 2];
 			fv[index_i / indices_in_tri] = polygon_indices;
 		}
 
