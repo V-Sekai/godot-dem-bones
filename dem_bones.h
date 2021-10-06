@@ -56,19 +56,27 @@ public:
 					// paint per-vertex colors in gray-scale. The closer the color to white,
 					// the more skinning weights of the vertex are preserved.
 					Ref<ArrayMesh> surface_mesh = mesh_instance_3d->get_mesh();
+
+					int32_t blend_count = 0;
 					if (surface_mesh.is_valid()) {
 						for (int32_t surface_i = 0; surface_i < surface_mesh->get_surface_count();
 								surface_i++) {
+					        Map<StringName, Vector<Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::TransformKey>>> transforms;
 							Array surface_arrays = surface_mesh->surface_get_arrays(surface_i);
 							Array blends_arrays =
 									surface_mesh->surface_get_blend_shape_arrays(surface_i);
+							int32_t blend_vertex_count = blends_arrays[Mesh::ARRAY_VERTEX].size();
+							int32_t mesh_vertex_count = surface_arrays[Mesh::ARRAY_VERTEX].size();
+							if (blend_vertex_count == 0) {
+								continue;
+							}
+							int32_t new_blend_count = mesh_vertex_count / blend_vertex_count;
+							blend_count += new_blend_count;
+							Map<StringName, Vector<Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::BlendKey>>> blends;
 							NodePath mesh_track;
-							Ref<Animation> animation;
 							Dem::DemBonesExt<double, float> bones;
-                            Map<int, Vector<Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::TransformKey>>> transforms;
-                            Map<int, Vector<Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::BlendKey>>> blends;
-							Array bone_mesh = bones.convert(surface_arrays, blends_arrays, skeleton,									
-                                    blends,
+							Array bone_mesh = bones.convert(surface_arrays, blends_arrays, skeleton,
+									blends,
 									transforms);
 						}
 					}

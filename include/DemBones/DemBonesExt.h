@@ -350,8 +350,8 @@ public:
 		Vector3 scale;
 	};
 	Array convert(Array p_mesh, Array p_blends, Skeleton3D *p_skeleton,
-			const Map<int32_t, Vector<TKey<BlendKey>>> &p_blend_tracks,
-			const Map<BoneId, Vector<TKey<TransformKey>>> &p_skeleton_tracks) {
+			const Map<StringName, Vector<TKey<BlendKey>>> &p_blend_tracks,
+			const Map<StringName, Vector<TKey<TransformKey>>> &p_skeleton_tracks) {
 		if (!p_blends.size()) {
 			return p_mesh;
 		}
