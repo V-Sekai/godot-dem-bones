@@ -342,6 +342,8 @@ public:
 
 		PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
 
+		nV = vertex_arrays.size();
+		v.resize(3, nV);
 		u.resize(nS * 3, nV);
 		for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
 				vertex_i++) {
@@ -350,7 +352,6 @@ public:
 			const float pos_z = vertex_arrays[vertex_i].z;
 			v.col(vertex_i) << pos_x, pos_y, pos_z;
 		}
-		nV = vertex_arrays.size();
 
 		// TODO iFire 2021-04-20
 		// u.block(0, 0, 3, nV) = v;
