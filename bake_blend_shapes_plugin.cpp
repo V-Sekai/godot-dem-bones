@@ -71,6 +71,7 @@ void BakeBlendShapesPlugin::_gltf2_dialog_action(String p_file) {
 		editor->show_accept(TTR("This operation can't be done without a scene."), TTR("OK"));
 		return;
 	}
+
 	// List<String> deps;
 	// Ref<GLTFDocument> doc;
 	// doc.instantiate();

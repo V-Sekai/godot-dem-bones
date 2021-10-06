@@ -11,16 +11,15 @@
 #include <stdint.h>
 #include <Eigen/Geometry>
 
-
 #ifndef DEM_BONES_MAT_BLOCKS
 #include "MatBlocks.h"
 #define DEM_BONES_DEM_BONES_EXT_MAT_BLOCKS_UNDEFINED
 #endif
 
 #include "core/config/engine.h"
-#include "scene/resources/importer_mesh.h"
 #include "scene/3d/skeleton_3d.h"
 #include "scene/animation/animation_player.h"
+#include "scene/resources/importer_mesh.h"
 #include "scene/resources/mesh.h"
 
 namespace Dem {
@@ -401,41 +400,8 @@ public:
 		//     return Array();
 		return p_mesh;
 	}
-};
+	};
 } // namespace Dem
-
-Error convert_blend_shape_animation_to_skinned_animation(
-		ImporterMesh *p_model, Skeleton3D *p_skeleton,
-		AnimationPlayer *p_ap) {
-	// TODO 2021-04-20
-	// - To hard-lock the transformations of bones: in the input fbx files,
-	// create bool attributes for joint nodes (bones) with name "demLock" and
-	// set the value to "true".
-
-	// - To soft-lock skinning weights of vertices: in the input fbx files,
-	// paint per-vertex colors in gray-scale. The closer the color to white,
-	// the more skinning weights of the vertex are preserved.
-
-	for (int32_t surface_i = 0; surface_i < p_model->get_surface_count();
-			surface_i++) {
-		Array surface_arrays = p_model->get_surface_arrays(surface_i);
-		Array blend_arrays;
-		int32_t blend_count = p_model->get_blend_shape_count();
-		blend_arrays.resize(blend_count);
-		for (int32_t blend_i = 0; blend_i < blend_count; blend_i++) {
-			Array blend_array =
-					p_model->get_surface_blend_shape_arrays(surface_i, blend_i);
-		}
-		// NodePath mesh_track;
-		// Vector<NodePath> blend_tracks;
-		// Vector<NodePath> skeleton_tracks;
-		// Ref<Animation> animation;
-		// Dem::DemBonesExt<double, float> bones;
-		// Array bone_mesh = bones.convert(surface_arrays, blend_arrays, p_skeleton,
-		// animation, mesh_track, blend_tracks, skeleton_tracks);
-	}
-	return OK;
-}
 #ifdef DEM_BONES_DEM_BONES_EXT_MAT_BLOCKS_UNDEFINED
 #undef blk4
 #undef rotMat

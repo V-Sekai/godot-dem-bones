@@ -29,11 +29,14 @@
 /*************************************************************************/
 
 #include "register_types.h"
+#include "dem_bones.h"
 #include "scene/resources/importer_mesh.h"
 #include "scene/resources/surface_tool.h"
+
 #ifdef TOOLS_ENABLED
-#include "editor/editor_plugin.h"
 #include "bake_blend_shapes_plugin.h"
+#include "editor/editor_plugin.h"
+
 #endif
 
 #include "DemBones/DemBonesExt.h"
@@ -43,9 +46,8 @@ void register_dem_bones_types() {
 #ifdef TOOLS_ENABLED
 	EditorPlugins::add_by_type<BakeBlendShapesPlugin>();
 #endif
-	Ref<ImporterMesh> mesh;
-	mesh.instantiate();
-	convert_blend_shape_animation_to_skinned_animation(mesh.ptr(), nullptr, nullptr);
+	GDREGISTER_CLASS(BlendShapeBake);
+
 #endif
 }
 
