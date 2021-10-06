@@ -349,26 +349,34 @@ private:
 
 public:
 	Array convert(Array p_mesh, Array p_blends, Skeleton3D *p_skeleton,
-			Ref<Animation> p_anim) {
+			Vector<Ref<Animation>> p_anims) {
+		if (!p_anims.size()) {
+			return Array();
+		}
+		// TODO: 2021-10-05 Support multiple tracks by putting into one long track
+		Ref<Animation> anim = p_anims[0];
+		if (anim.is_null()) {
+			return Array();
+		}
 		if (!p_blends.size()) {
 			return p_mesh;
 		}
 
 		Map<StringName, Vector<TKey<TransformKey>>> transforms;
 		Map<StringName, Vector<TKey<BlendKey>>> blends;
-		for (int32_t track_i = 0; track_i < p_anim->get_track_count(); track_i++) {
-			String track_path = p_anim->track_get_path(track_i);
-			Animation::TrackType track_type = p_anim->track_get_type(track_i);
+		for (int32_t track_i = 0; track_i < anim->get_track_count(); track_i++) {
+			String track_path = anim->track_get_path(track_i);
+			Animation::TrackType track_type = anim->track_get_type(track_i);
 			if (track_type == Animation::TYPE_TRANSFORM3D) {
 				const double increment = 1.0 / 30.0f;
 				double time = 0.0;
-				double length = p_anim->get_length();
+				double length = anim->get_length();
 
 				::Vector3 base_loc;
 				::Quaternion base_rot;
 				::Vector3 base_scale = ::Vector3(1, 1, 1);
 
-				p_anim->transform_track_interpolate(track_i, 0.0f, &base_loc, &base_rot, &base_scale);
+				anim->transform_track_interpolate(track_i, 0.0f, &base_loc, &base_rot, &base_scale);
 
 				bool last = false;
 				Vector<Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::TransformKey>> transform_anims;
@@ -377,7 +385,7 @@ public:
 					::Quaternion rot = base_rot;
 					::Vector3 scale = base_scale;
 
-					p_anim->transform_track_interpolate(track_i, time, &loc, &rot, &scale);
+					anim->transform_track_interpolate(track_i, time, &loc, &rot, &scale);
 					Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::TransformKey> key;
 					key.time = time;
 					TransformKey transform_key;
@@ -399,17 +407,17 @@ public:
 			} else if (track_type == Animation::TYPE_VALUE) {
 				const double increment = 1.0 / 30.0f;
 				double time = 0.0;
-				double length = p_anim->get_length();
+				double length = anim->get_length();
 
 				float base_weight = 0.0f;
-				base_weight = p_anim->value_track_interpolate(track_i, 0.0f);
+				base_weight = anim->value_track_interpolate(track_i, 0.0f);
 
 				bool last = false;
 				Vector<TKey<BlendKey>> blend_anims;
 				while (true) {
 					float weight = base_weight;
 
-					weight = p_anim->value_track_interpolate(track_i, time);
+					weight = anim->value_track_interpolate(track_i, time);
 					TKey<BlendKey> key;
 					key.time = time;
 					BlendKey blend_key;
