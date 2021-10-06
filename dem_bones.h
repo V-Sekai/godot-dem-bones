@@ -13,7 +13,27 @@ class BlendShapeBake : public Resource {
 public:
 	Error convert_scene(Node *p_scene) {
 		List<Node *> queue;
-		AnimationPlayer *ap = memnew(AnimationPlayer);
+		AnimationPlayer *ap = nullptr;
+		queue.push_back(p_scene);
+		while (!queue.is_empty()) {
+			List<Node *>::Element *front = queue.front();
+			Node *node = front->get();
+			if (ap) {
+				// Use the first animation player
+				ap = cast_to<AnimationPlayer>(node);
+				queue.clear();
+				break;
+			}
+			int child_count = node->get_child_count();
+			for (int32_t i = 0; i < child_count; i++) {
+				queue.push_back(node->get_child(i));
+			}
+			queue.pop_front();
+		}
+		if (!ap) {
+			return OK;
+		}
+
 		p_scene->add_child(ap);
 		ap->set_owner(p_scene);
 		queue.push_back(p_scene);
@@ -43,12 +63,13 @@ public:
 							Array blends_arrays =
 									surface_mesh->surface_get_blend_shape_arrays(surface_i);
 							NodePath mesh_track;
-							Vector<NodePath> blend_tracks;
-							Vector<NodePath> skeleton_tracks;
 							Ref<Animation> animation;
 							Dem::DemBonesExt<double, float> bones;
-							Array bone_mesh = bones.convert(surface_arrays, blends_arrays, skeleton,
-									animation, mesh_track, blend_tracks, skeleton_tracks);
+                            Map<int, Vector<Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::TransformKey>>> transforms;
+                            Map<int, Vector<Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::BlendKey>>> blends;
+							Array bone_mesh = bones.convert(surface_arrays, blends_arrays, skeleton,									
+                                    blends,
+									transforms);
 						}
 					}
 				}

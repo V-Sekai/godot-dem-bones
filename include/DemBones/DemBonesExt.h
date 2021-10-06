@@ -330,10 +330,28 @@ private:
 	}
 
 public:
+	struct Key {
+		double time = 0.0; // time in secs
+	};
+
+	// transform key holds either Vector3 or Quaternion
+	template <class T>
+	struct TKey : public Key {
+		T value;
+	};
+	struct TransformKey {
+		Vector3 loc;
+		Quaternion rot;
+		Vector3 scale;
+	};
+	struct BlendKey {
+		Vector3 loc;
+		Quaternion rot;
+		Vector3 scale;
+	};
 	Array convert(Array p_mesh, Array p_blends, Skeleton3D *p_skeleton,
-			Ref<Animation> p_animation, NodePath p_mesh_track,
-			Vector<NodePath> p_blend_tracks,
-			Vector<NodePath> p_skeleton_tracks) {
+			const Map<int32_t, Vector<TKey<BlendKey>>> &p_blend_tracks,
+			const Map<BoneId, Vector<TKey<TransformKey>>> &p_skeleton_tracks) {
 		if (!p_blends.size()) {
 			return p_mesh;
 		}
