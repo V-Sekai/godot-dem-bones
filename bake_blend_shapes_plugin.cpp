@@ -34,12 +34,12 @@
 #include "core/error/error_list.h"
 #include "core/object/object.h"
 #include "core/templates/vector.h"
+#include "dem_bones.h"
 #include "editor/editor_file_system.h"
+#include "editor/editor_node.h"
 #include "scene/3d/mesh_instance_3d.h"
 #include "scene/gui/check_box.h"
 #include "scene/main/node.h"
-
-#include "editor/editor_node.h"
 
 String BakeBlendShapesPlugin::get_name() const {
 	return "bake_blend_shapes";
@@ -53,7 +53,6 @@ BakeBlendShapesPlugin::BakeBlendShapesPlugin(EditorNode *p_node) {
 	editor = p_node;
 	file_export_lib = memnew(EditorFileDialog);
 	editor->get_gui_base()->add_child(file_export_lib);
-	file_export_lib->connect("file_selected", callable_mp(this, &BakeBlendShapesPlugin::_gltf2_dialog_action));
 	file_export_lib->set_title(TTR("Export Library"));
 	file_export_lib->set_file_mode(EditorFileDialog::FILE_MODE_SAVE_FILE);
 	file_export_lib->set_access(EditorFileDialog::ACCESS_FILESYSTEM);
@@ -65,34 +64,20 @@ BakeBlendShapesPlugin::BakeBlendShapesPlugin(EditorNode *p_node) {
 	add_tool_menu_item(gltf_scene_name, callable_mp(this, &BakeBlendShapesPlugin::convert_scene_to_gltf2));
 }
 
-void BakeBlendShapesPlugin::_gltf2_dialog_action(String p_file) {
-	Node *root = editor->get_tree()->get_edited_scene_root();
-	if (!root) {
-		editor->show_accept(TTR("This operation can't be done without a scene."), TTR("OK"));
-		return;
-	}
-
-	// List<String> deps;
-	// Ref<GLTFDocument> doc;
-	// doc.instantiate();
-	// Error err = doc->save_scene(root, p_file, p_file, 0, 30.0f, Ref<GLTFState>());
-	// if (err != OK) {
-	// 	ERR_PRINT(vformat("glTF2 save scene error %s.", itos(err)));
-	// }
-}
-
 void BakeBlendShapesPlugin::convert_scene_to_gltf2() {
 	Node *root = editor->get_tree()->get_edited_scene_root();
 	if (!root) {
 		editor->show_accept(TTR("This operation can't be done without a scene."), TTR("OK"));
 		return;
 	}
-	String filename = String(root->get_scene_file_path().get_file().get_basename());
-	if (filename.is_empty()) {
-		filename = root->get_name();
+
+	List<String> deps;
+	Ref<BlendShapeBake> bake;
+	bake.instantiate();
+	Error err = bake->convert_scene(root);
+	if (err != OK) {
+		ERR_PRINT(vformat("Bake scene error %s.", itos(err)));
 	}
-	file_export_lib->set_current_file(filename + String(".gltf"));
-	file_export_lib->popup_centered_ratio();
 }
 
 #endif // TOOLS_ENABLED
