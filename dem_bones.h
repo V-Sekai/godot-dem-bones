@@ -36,7 +36,7 @@ public:
 					// paint per-vertex colors in gray-scale. The closer the color to white,
 					// the more skinning weights of the vertex are preserved.
 					Ref<ArrayMesh> surface_mesh = mesh_instance_3d->get_mesh();
-					if (surface_mesh.is_valid() && surface_mesh->get_surface_count()) {
+					if (surface_mesh.is_valid()) {
 						for (int32_t surface_i = 0; surface_i < surface_mesh->get_surface_count();
 								surface_i++) {
 							Array surface_arrays = surface_mesh->surface_get_arrays(surface_i);

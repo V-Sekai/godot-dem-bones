@@ -337,70 +337,70 @@ public:
 		if (!p_blends.size()) {
 			return p_mesh;
 		}
-		//     ERR_FAIL_NULL_V(p_skeleton, Array());
-		//     nS = 1;
+		ERR_FAIL_NULL_V(p_skeleton, Array());
+		nS = 1;
 
-		//     PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
-		//     nV = vertex_arrays.size();
-		//     u.resize(nS * 3, nV);
-		//     for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
-		//     vertex_i++) {
-		//       const float pos_x = vertex_arrays[vertex_i].x;
-		//       const float pos_y = vertex_arrays[vertex_i].y;
-		//       const float pos_z = vertex_arrays[vertex_i].z;
-		//       v.col(vertex_i).segment<3>((vertex_i)*3) << pos_x, pos_y, pos_z;
-		//     }
-		//     // TODO iFire 2021-04-20
-		//     // u.block(0, 0, 3, nV) = v;
-		//     PackedInt32Array indices = p_mesh[Mesh::ARRAY_INDEX];
+		PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
 
-		//     // Assume triangles
-		//     const int indices_in_tri = 3;
-		//     fv.resize(indices.size() / indices_in_tri);
-		//     for (int32_t index_i = 0; index_i < indices.size(); index_i += 3) {
-		//       std::vector<int> polygon_indices;
-		//       polygon_indices.resize(indices_in_tri);
-		//       polygon_indices[index_i / 3 + 0] = indices[index_i / 3 + 0];
-		//       polygon_indices[index_i / 3 + 1] = indices[index_i / 3 + 1];
-		//       polygon_indices[index_i / 3 + 2] = indices[index_i / 3 + 2];
-		//       fv[index_i / indices_in_tri] = polygon_indices;
-		//     }
+		u.resize(nS * 3, nV);
+		for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
+				vertex_i++) {
+			const float pos_x = vertex_arrays[vertex_i].x;
+			const float pos_y = vertex_arrays[vertex_i].y;
+			const float pos_z = vertex_arrays[vertex_i].z;
+			v.col(vertex_i) << pos_x, pos_y, pos_z;
+		}
+		nV = vertex_arrays.size();
 
-		//     PackedInt32Array bones = p_mesh[Mesh::ARRAY_BONES];
-		//     Set<int32_t> bone_set;
+		// TODO iFire 2021-04-20
+		// u.block(0, 0, 3, nV) = v;
+		PackedInt32Array indices = p_mesh[Mesh::ARRAY_INDEX];
 
-		//     for (int32_t bones_i = 0; bones_i < bones.size(); bones_i++) {
-		//       bone_set.insert(bones[bones_i]);
-		//     }
-		//     nB = bone_set.size();
-		//     nF = 1;
-		//     const int iteration_max = 100;
-		//     double tolerance = 0.0;
-		//     int patience = 3;
-		//     DemBonesExt<double, float>::compute();
-		//     double prevErr = -1;
-		//     int np = 3;
-		//     for (int32_t iteration = 0; iteration < iteration_max; iteration++) {
-		//       double err = rmse();
-		//       print_line("RMSE = " + itos(err));
-		//       if ((err < prevErr * (1 + weightEps)) &&
-		//           ((prevErr - err) < tolerance * prevErr)) {
-		//         np--;
-		//         if (np == 0) {
-		//           print_line("Convergence is reached!");
-		//           return Array();
-		//         }
-		//       } else {
+		// Assume triangles
+		const int indices_in_tri = 3;
+		fv.resize(indices.size() / indices_in_tri);
+		for (int32_t index_i = 0; index_i < indices.size(); index_i += 3) {
+			std::vector<int> polygon_indices;
+			polygon_indices.resize(indices_in_tri);
+			polygon_indices[index_i / 3 + 0] = indices[index_i / 3 + 0];
+			polygon_indices[index_i / 3 + 1] = indices[index_i / 3 + 1];
+			polygon_indices[index_i / 3 + 2] = indices[index_i / 3 + 2];
+			fv[index_i / indices_in_tri] = polygon_indices;
+		}
 
-		//         np = patience;
-		//       }
-		//       prevErr = err;
-		//       return Array();
-		//     }
-		//     return Array();
-		return p_mesh;
+		PackedInt32Array bones = p_mesh[Mesh::ARRAY_BONES];
+		Set<int32_t> bone_set;
+
+		for (int32_t bones_i = 0; bones_i < bones.size(); bones_i++) {
+			bone_set.insert(bones[bones_i]);
+		}
+		nB = bone_set.size();
+		nF = 1;
+		const int iteration_max = 100;
+		double tolerance = 0.0;
+		int patience = 3;
+		DemBonesExt<double, float>::compute();
+		double prevErr = -1;
+		int np = 3;
+		for (int32_t iteration = 0; iteration < iteration_max; iteration++) {
+			double err = DemBones<_Scalar, _AniMeshScalar>::rmse();
+			print_line("RMSE = " + itos(err));
+			if ((err < prevErr * (1 + weightEps)) &&
+					((prevErr - err) < tolerance * prevErr)) {
+				np--;
+				if (np == 0) {
+					print_line("Convergence is reached!");
+					return Array();
+				}
+			} else {
+				np = patience;
+			}
+			prevErr = err;
+			return Array();
+		}
+		return Array();
 	}
-	};
+};
 } // namespace Dem
 #ifdef DEM_BONES_DEM_BONES_EXT_MAT_BLOCKS_UNDEFINED
 #undef blk4
