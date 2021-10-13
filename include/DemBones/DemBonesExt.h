@@ -369,6 +369,10 @@ public:
 		for (int32_t track_i = 0; track_i < anim->get_track_count(); track_i++) {
 			String track_path = anim->track_get_path(track_i);
 			Animation::TrackType track_type = anim->track_get_type(track_i);
+#ifndef _MSC_VER
+#warning this needs to be redone
+#endif
+#if 0
 			if (track_type == Animation::TYPE_TRANSFORM3D) {
 				const double increment = 1.0 / FPS;
 				double time = 0.0;
@@ -437,6 +441,7 @@ public:
 				}
 				blends.insert(track_path, blend_anims);
 			}
+#endif
 		}
 		ERR_FAIL_NULL_V(p_skeleton, Array());
 		num_subjects = 1;
@@ -460,7 +465,7 @@ public:
 		{
 			PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
 			num_vertices = vertex_arrays.size();
-		    rest_pose_geometry.resize(num_subjects * 3, num_vertices);
+			rest_pose_geometry.resize(num_subjects * 3, num_vertices);
 			for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
 					vertex_i++) {
 				float pos_x = vertex_arrays[vertex_i].x;
