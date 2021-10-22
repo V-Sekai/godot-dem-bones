@@ -49,16 +49,16 @@ public:
 	using SparseMatrix = Eigen::SparseMatrix<_Scalar>;
 	using Triplet = Eigen::Triplet<_Scalar>;
 
-	using DemBones<_Scalar, _AniMeshScalar>::num_global_iterations;
-	using DemBones<_Scalar, _AniMeshScalar>::number_init_iterations;
-	using DemBones<_Scalar, _AniMeshScalar>::num_bone_transform_iterations_per_global;
-	using DemBones<_Scalar, _AniMeshScalar>::transform_affine_constraint;
-	using DemBones<_Scalar, _AniMeshScalar>::transform_affine_translation_constraint;
-	using DemBones<_Scalar, _AniMeshScalar>::num_weight_update_iterations;
-	using DemBones<_Scalar, _AniMeshScalar>::num_non_zero_bone_weights_vertex;
-	using DemBones<_Scalar, _AniMeshScalar>::weight_smoothness_constraint;
-	using DemBones<_Scalar, _AniMeshScalar>::weight_smmothness_step_size;
-	using DemBones<_Scalar, _AniMeshScalar>::weight_epsilon;
+	using DemBones<_Scalar, _AniMeshScalar>::nIters;
+	using DemBones<_Scalar, _AniMeshScalar>::nInitIters;
+	using DemBones<_Scalar, _AniMeshScalar>::nTransIters;
+	using DemBones<_Scalar, _AniMeshScalar>::transAffine;
+	using DemBones<_Scalar, _AniMeshScalar>::transAffineNorm;
+	using DemBones<_Scalar, _AniMeshScalar>::nWeightsIters;
+	using DemBones<_Scalar, _AniMeshScalar>::nnz;
+	using DemBones<_Scalar, _AniMeshScalar>::weightsSmooth;
+	using DemBones<_Scalar, _AniMeshScalar>::weightsSmoothStep;
+	using DemBones<_Scalar, _AniMeshScalar>::weightEps;
 
 	using DemBones<_Scalar, _AniMeshScalar>::num_vertices;
 	using DemBones<_Scalar, _AniMeshScalar>::num_bones;
@@ -72,7 +72,7 @@ public:
 	using DemBones<_Scalar, _AniMeshScalar>::bone_transform_mat;
 	using DemBones<_Scalar, _AniMeshScalar>::lock_mat;
 	using DemBones<_Scalar, _AniMeshScalar>::vertex;
-	using DemBones<_Scalar, _AniMeshScalar>::frame_index;
+	using DemBones<_Scalar, _AniMeshScalar>::fv;
 
 	//! Timestamps for bone transformations #bone_transform_mat, [@c size] = #num_subjects, #fTime(@p k) is
 	//! the timestamp of frame @p k
@@ -156,7 +156,7 @@ private:
           @param b is the [4, 4*#num_bones] by-reference output global bind matrices,
      #b.#a block(0, 4*@p j, 4, 4) is the bind matrix of bone @p j
   */
-	void compute_centroids(int p_subject_i, MatrixX &p_bone_bind_matrix);
+	void compute_centroids(int s, MatrixX &b);
 
 	/** Global bind pose
           @param s is the subject index
@@ -298,7 +298,7 @@ void Dem::DemBonesExt<_Scalar, _AniMeshScalar>::compute_centroids(int s, MatrixX
 	for (int vert_i = 0; vert_i < num_vertices; vert_i++) {
 		for (typename SparseMatrix::InnerIterator it(skinning_weights, vert_i); it; ++it) {
 			c.col(it.row()) +=
-					pow(it.value(), transform_affine_translation_constraint) * rest_pose_geometry.vec3(s, vert_i).homogeneous();
+					pow(it.value(), transAffineNorm) * rest_pose_geometry.vec3(s, vert_i).homogeneous();
 		}
 	}
 	for (int bone_i = 0; bone_i < num_bones; bone_i++) {
@@ -546,14 +546,14 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 
 	// Assume triangles
 	const int indices_in_tri = 3;
-	frame_index.resize(indices.size() / indices_in_tri);
+	fv.resize(indices.size() / indices_in_tri);
 	for (int32_t index_i = 0; index_i < indices.size(); index_i += 3) {
 		std::vector<int> polygon_indices;
 		polygon_indices.resize(indices_in_tri);
 		polygon_indices[0] = indices[index_i / 3 + 0];
 		polygon_indices[1] = indices[index_i / 3 + 1];
 		polygon_indices[2] = indices[index_i / 3 + 2];
-		frame_index[index_i / indices_in_tri] = polygon_indices;
+		fv[index_i / indices_in_tri] = polygon_indices;
 	}
 
 	PackedInt32Array bones = p_mesh[Mesh::ARRAY_BONES];
@@ -573,7 +573,7 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 	for (int32_t iteration_i = 0; iteration_i < iteration_max; iteration_i++) {
 		double err = DemBones<_Scalar, _AniMeshScalar>::rmse();
 		print_line("RMSE = " + itos(err));
-		if ((err < prevErr * (1 + weight_epsilon)) &&
+		if ((err < prevErr * (1 + weightEps)) &&
 				((prevErr - err) < tolerance * prevErr)) {
 			np--;
 			if (np == 0) {
