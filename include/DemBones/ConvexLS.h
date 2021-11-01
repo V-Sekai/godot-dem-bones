@@ -11,20 +11,19 @@
 #include <Eigen/StdVector>
 
 namespace Dem {
-
 /** @class ConvexLS ConvexLS.h "DemBones/ConvexLS.h"
-        @brief Linear least squares solver with non-negativity constraint and
+		@brief Linear least squares solver with non-negativity constraint and
    optional affinity constraint
-        @details Solve:
-        @f{eqnarray*}{
-                min &||Ax-b||^2 \\
-                \mbox{Subject to: } & x(0).. x(n-1) \geq 0, \\
-                \mbox{(optional) } & x(0) +.. + x(n-1) = 1
-        @f}
-        The solver implements active set method to handle non-negativity
+		@details Solve:
+		@f{eqnarray*}{
+				min &||Ax-b||^2 \\
+				\mbox{Subject to: } & x(0).. x(n-1) \geq 0, \\
+				\mbox{(optional) } & x(0) +.. + x(n-1) = 1
+		@f}
+		The solver implements active set method to handle non-negativity
    constraint and QR decomposition to handle affinity constraint.
 
-        @b _Scalar is the floating-point data type.
+		@b _Scalar is the floating-point data type.
 */
 template <class _Scalar>
 class ConvexLS {
@@ -34,8 +33,8 @@ public:
 	using VectorX = Eigen::Matrix<_Scalar, Eigen::Dynamic, 1>;
 
 	/** Constructor, just call init()
-          @param[in] maxSize is the maximum size of the unknown @f$ x @f$ if the
-     affinity constraint is imposed.
+		  @param[in] maxSize is the maximum size of the unknown @f$ x @f$ if the
+	 affinity constraint is imposed.
   */
 	ConvexLS(int maxSize = 1) {
 		q2.resize(0);
@@ -43,9 +42,9 @@ public:
 	}
 
 	/** Init matrices @f$ Q @f$ in the QR decomposition used for affinity
-     constraint
-          @param[in] maxSize is the maximum size of the unknown @f$ x @f$ if the
-     affinity constraint is imposed.
+	 constraint
+		  @param[in] maxSize is the maximum size of the unknown @f$ x @f$ if the
+	 affinity constraint is imposed.
   */
 	void init(int maxSize) {
 		int curN = (int)q2.size() + 1;
@@ -61,12 +60,12 @@ public:
 	}
 
 	/** Solve the least squares problem
-          @param[in] aTa is the cross product matrix @f$ A^TA @f$
-          @param[in] aTb is the vector @f$ A^Tb @f$
-          @param[in, out] x is the by-reference output and it is also the init
-     solution (if @b warmStart == @c true)
-          @param[in] affine=true will impose affinity constraint
-          @param[in] warmStart=true will initialize the solution by @b x
+		  @param[in] aTa is the cross product matrix @f$ A^TA @f$
+		  @param[in] aTb is the vector @f$ A^Tb @f$
+		  @param[in, out] x is the by-reference output and it is also the init
+	 solution (if @b warmStart == @c true)
+		  @param[in] affine=true will impose affinity constraint
+		  @param[in] warmStart=true will initialize the solution by @b x
   */
 	void solve(const MatrixX &aTa, const VectorX &aTb, VectorX &x, bool affine,
 			bool warmStart = false) {
@@ -127,14 +126,14 @@ private:
 	std::vector<MatrixX, Eigen::aligned_allocator<MatrixX>> q2;
 
 	/** Solve the gradient
-          @param[in] aTa is the cross product matrix @f$ A^TA @f$
-          @param[in] aTb is the vector @f$ A^Tb @f$
-          @param[in] x is the current solution
-          @param[in] idx indicates the current active set, @p idx(0).. @p
-     idx(np-1) are passive (free) variables
-          @param[in] np is the size of the active set
-          @param[in] zeroSum=true will impose zer-sum of gradient
-          @param[output] p is the by-reference negative gradient output
+		  @param[in] aTa is the cross product matrix @f$ A^TA @f$
+		  @param[in] aTb is the vector @f$ A^Tb @f$
+		  @param[in] x is the current solution
+		  @param[in] idx indicates the current active set, @p idx(0).. @p
+	 idx(np-1) are passive (free) variables
+		  @param[in] np is the size of the active set
+		  @param[in] zeroSum=true will impose zer-sum of gradient
+		  @param[output] p is the by-reference negative gradient output
   */
 	void solveP(const MatrixX &aTa, const VectorX &aTb, const VectorX &x,
 			const Eigen::ArrayXi &idx, int np, bool zeroSum, VectorX &p) {
@@ -163,7 +162,6 @@ private:
 		}
 	}
 };
-
 } // namespace Dem
 
 #endif

@@ -13,9 +13,8 @@
 #include <Eigen/Dense>
 
 namespace Dem {
-
 /** NullaryOp forward mapping for matrix with row indices and column indices,
-        check: https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html
+		check: https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html
 */
 template <class ArgType, class RowIndexType, class ColIndexType>
 class indexing_functor_row_col {
@@ -40,7 +39,7 @@ public:
 };
 
 /**	Function forward mapping for matrix with row indices and column indices,
-        check: https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html
+		check: https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html
 */
 template <class ArgType, class RowIndexType, class ColIndexType>
 Eigen::CwiseNullaryOp<
@@ -57,7 +56,7 @@ indexing_row_col(const Eigen::MatrixBase<ArgType> &arg,
 }
 
 /** NullaryOp forward mapping for matrix with row indices,
-        check: https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html
+		check: https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html
 */
 template <class ArgType, class RowIndexType>
 class indexing_functor_row {
@@ -80,7 +79,7 @@ public:
 };
 
 /** Function forward mapping for matrix with row indices,
-        check: https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html
+		check: https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html
 */
 template <class ArgType, class RowIndexType>
 Eigen::CwiseNullaryOp<
@@ -95,7 +94,7 @@ indexing_row(const Eigen::MatrixBase<ArgType> &arg,
 }
 
 /** NullaryOp forward mapping for vector with indices,
-        check: https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html
+		check: https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html
 */
 template <class ArgType, class IndexType>
 class indexing_functor_vector {
@@ -114,7 +113,7 @@ public:
 };
 
 /** Function forward mapping for vector with indices,
-        check: https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html
+		check: https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html
 */
 template <class ArgType, class IndexType>
 Eigen::CwiseNullaryOp<
@@ -126,7 +125,6 @@ indexing_vector(const Eigen::MatrixBase<ArgType> &arg,
 	typedef typename Func::VectorType VectorType;
 	return VectorType::NullaryExpr(indices.size(), Func(arg.derived(), indices));
 }
-
 } // namespace Dem
 
 #endif

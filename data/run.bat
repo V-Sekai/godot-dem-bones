@@ -3,7 +3,7 @@ call "../bin/Windows/DemBones.exe" -i="Bone_Geom.fbx" -a="Bone_Anim.abc" -b=5 -o
 call "../bin/Windows/DemBones.exe" -i="Bone_Geom.fbx" -a="Bone_Anim.abc" -b=10 -o="Decomposition_10.fbx"
 call "../bin/Windows/DemBones.exe" -i="Bone_Geom.fbx" -a="Bone_Anim.abc" -b=20 -o="Decomposition_20.fbx"
 
-rem Joint grouping 
+rem Joint grouping
 call "../bin/Windows/DemBones.exe" -i="Bone_Geom.fbx" -a="Bone_Anim.abc" -b=20 --bindUpdate=2 -o="Decomposition_20_grouped.fbx"
 
 rem Solve skinning weights from input meshes sequence and input bone transformations

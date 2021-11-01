@@ -10,7 +10,7 @@
 
 ## Version 1.1.0 (June 2020)
 - Add per-bone transformation hard-lock and per-vertex weights soft-lock
-- Fix initialization issue on cluster splitting 
+- Fix initialization issue on cluster splitting
 - Support joint orientation in command line tools
 - Add command line tool for Linux
 - FBXSDK 2020, Alembic (from Maya 2020 DevKit)

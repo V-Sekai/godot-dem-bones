@@ -2,7 +2,7 @@
 
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     EXECUTION_FILE="../bin/Linux/DemBones"
-elif [[ "$OSTYPE" == "darwin"* ]]; then 
+elif [[ "$OSTYPE" == "darwin"* ]]; then
     EXECUTION_FILE="../bin/MacOS/DemBones"
 fi
 
@@ -11,7 +11,7 @@ $EXECUTION_FILE -i="Bone_Geom.fbx" -a="Bone_Anim.abc" -b=5 -o="Decomposition_05.
 $EXECUTION_FILE -i="Bone_Geom.fbx" -a="Bone_Anim.abc" -b=10 -o="Decomposition_10.fbx"
 $EXECUTION_FILE -i="Bone_Geom.fbx" -a="Bone_Anim.abc" -b=20 -o="Decomposition_20.fbx"
 
-# Joint grouping 
+# Joint grouping
 $EXECUTION_FILE -i="Bone_Geom.fbx" -a="Bone_Anim.abc" -b=20 --bindUpdate=2 -o="Decomposition_20_grouped.fbx"
 
 # Solve skinning weights from input meshes sequence and input bone transformations

@@ -24,15 +24,14 @@
 #include "scene/resources/mesh.h"
 
 namespace Dem {
-
 /**  @class DemBonesExt DemBonesExt.h "DemBones/DemBonesExt.h"
-        @brief Extended class to handle hierarchical skeleton with local
+		@brief Extended class to handle hierarchical skeleton with local
    rotations/translations and bind matrices
 
-        @details Call computeRTB() to get local rotations/translations and bind
+		@details Call computeRTB() to get local rotations/translations and bind
    matrices after skinning decomposition is done and other data is set.
 
-        @b _Scalar is the floating-point data type. @b _AniMeshScalar is the
+		@b _Scalar is the floating-point data type. @b _AniMeshScalar is the
    floating-point data type of mesh sequence #vertex.
 */
 template <class _Scalar, class _AniMeshScalar>
@@ -111,74 +110,74 @@ public:
 	int bind_update;
 
 	/** @brief Constructor and setting default parameters
-   */
+	 */
 	DemBonesExt();
 
 	/** @brief Clear all data
-   */
+	 */
 	void clear();
 
 	/** @brief Local rotations, translations and global bind matrices of a subject
-          @details Required all data in the base class: #rest_pose_geometry, #fv, #num_vertices, #vertex, #num_total_frames,
-     #frame_start_index, #frame_subject_id, #num_subjects, #bone_transform_mat, #skinning_weights, #num_bones
+		  @details Required all data in the base class: #rest_pose_geometry, #fv, #num_vertices, #vertex, #num_total_frames,
+	 #frame_start_index, #frame_subject_id, #num_subjects, #bone_transform_mat, #skinning_weights, #num_bones
 
-          This function will initialize missing attributes:
-          - #parent: -1 vector (if no joint grouping) or parent to a root, [@c
-     size] = #num_bones
-          - #preMulInv: 4*4 identity matrix blocks, [@c size] = [4*#num_subjects, 4*#num_bones]
-          - #rotOrder: {0, 1, 2} vector blocks, [@c size] = [3*#num_subjects, #num_bones]
-          - #orient: 0 matrix, [@c size] = [3*#num_subjects, #num_bones]
+		  This function will initialize missing attributes:
+		  - #parent: -1 vector (if no joint grouping) or parent to a root, [@c
+	 size] = #num_bones
+		  - #preMulInv: 4*4 identity matrix blocks, [@c size] = [4*#num_subjects, 4*#num_bones]
+		  - #rotOrder: {0, 1, 2} vector blocks, [@c size] = [3*#num_subjects, #num_bones]
+		  - #orient: 0 matrix, [@c size] = [3*#num_subjects, #num_bones]
 
-          @param[in] s is the subject index
-          @param[out] lr is the [3*@p nFr, #num_bones] by-reference output local
-     rotations, @p lr.@a col(@p j).segment<3>(3*@p k) is the (@c rx, @c ry, @c
-     rz) of bone @p j at frame @p k
-          @param[out] lt is the [3*@p nFr, #num_bones] by-reference output local
-     translations, @p lt.@a col(@p j).segment<3>(3*@p k) is the (@c tx, @c ty,
-     @c tz) of bone @p j at frame @p k
-          @param[out] gb is the [4, 4*#num_bones] by-reference output global bind
-     matrices, @p gb.@a block(0, 4*@p j, 4, 4) is the bind matrix of bone j
-          @param[out] lbr is the [3, #num_bones] by-reference output local rotations at
-     bind pose @p lbr.@a col(@p j).segment<3>(3*@p k) is the (@c rx, @c ry, @c
-     rz) of bone @p j
-          @param[out] lbt is the [3, #num_bones] by-reference output local translations
-     at bind pose, @p lbt.@a col(@p j).segment<3>(3*@p k) is the (@c tx, @c ty,
-     @c tz) of bone @p j
-          @param[in] degreeRot=true will output rotations in degree, otherwise
-     output in radian
+		  @param[in] s is the subject index
+		  @param[out] lr is the [3*@p nFr, #num_bones] by-reference output local
+	 rotations, @p lr.@a col(@p j).segment<3>(3*@p k) is the (@c rx, @c ry, @c
+	 rz) of bone @p j at frame @p k
+		  @param[out] lt is the [3*@p nFr, #num_bones] by-reference output local
+	 translations, @p lt.@a col(@p j).segment<3>(3*@p k) is the (@c tx, @c ty,
+	 @c tz) of bone @p j at frame @p k
+		  @param[out] gb is the [4, 4*#num_bones] by-reference output global bind
+	 matrices, @p gb.@a block(0, 4*@p j, 4, 4) is the bind matrix of bone j
+		  @param[out] lbr is the [3, #num_bones] by-reference output local rotations at
+	 bind pose @p lbr.@a col(@p j).segment<3>(3*@p k) is the (@c rx, @c ry, @c
+	 rz) of bone @p j
+		  @param[out] lbt is the [3, #num_bones] by-reference output local translations
+	 at bind pose, @p lbt.@a col(@p j).segment<3>(3*@p k) is the (@c tx, @c ty,
+	 @c tz) of bone @p j
+		  @param[in] degreeRot=true will output rotations in degree, otherwise
+	 output in radian
   */
 	void computeRTB(int s, MatrixX &r_local_rotations, MatrixX &r_local_translations, MatrixX &gb, MatrixX &local_bind_pose_rotation,
 			MatrixX &r_local_bind_pose_translation, bool degreeRot = true);
 
 private:
 	/** p-norm centroids (using #transAffineNorm) and rotations to identity
-          @param s is the subject index
-          @param b is the [4, 4*#num_bones] by-reference output global bind matrices,
-     #b.#a block(0, 4*@p j, 4, 4) is the bind matrix of bone @p j
+		  @param s is the subject index
+		  @param b is the [4, 4*#num_bones] by-reference output global bind matrices,
+	 #b.#a block(0, 4*@p j, 4, 4) is the bind matrix of bone @p j
   */
 	void compute_centroids(int s, MatrixX &b);
 
 	/** Global bind pose
-          @param s is the subject index
-          @param bindUpdate is the type of bind pose update, 0=keep original, 1
-     or 2=set translations to p-norm centroids (using #transAffineNorm) and
-     rotations to identity
-          @param b is the the [4, 4*#num_bones] by-reference output global bind
-     matrices, #b.#a block(0, 4*@p j, 4, 4) is the bind matrix of bone @p j
+		  @param s is the subject index
+		  @param bindUpdate is the type of bind pose update, 0=keep original, 1
+	 or 2=set translations to p-norm centroids (using #transAffineNorm) and
+	 rotations to identity
+		  @param b is the the [4, 4*#num_bones] by-reference output global bind
+	 matrices, #b.#a block(0, 4*@p j, 4, 4) is the bind matrix of bone @p j
   */
 	void compute_bind(int p_subject, MatrixX &r_output_global_bind_matrix);
 
 	/** Root joint
-   */
+	 */
 	int compute_root();
 
 	/** Euler angles from rotation matrix
-          @param rMat is the 3*3 rotation matrix
-          @param curRot is the input current Euler angles, it is also the
-     by-reference output closet Euler angles correspond to @p rMat
-          @param ro is the rotation order, 0=@c X, 1=@c Y, 2=@c Z, e.g. {0, 1,
-     2} is @c XYZ order
-          @param eps is the epsilon
+		  @param rMat is the 3*3 rotation matrix
+		  @param curRot is the input current Euler angles, it is also the
+	 by-reference output closet Euler angles correspond to @p rMat
+		  @param ro is the rotation order, 0=@c X, 1=@c Y, 2=@c Z, e.g. {0, 1,
+	 2} is @c XYZ order
+		  @param eps is the epsilon
   */
 	void to_rot(const Matrix3 &p_basis, Vector3 &r_input_euler, const Eigen::Vector3i &p_rotation_order,
 			_Scalar p_epsilon = _Scalar(1e-10));
@@ -588,7 +587,6 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 	}
 	return Array();
 }
-
 } // namespace Dem
 #ifdef DEM_BONES_DEM_BONES_EXT_MAT_BLOCKS_UNDEFINED
 #undef blk4

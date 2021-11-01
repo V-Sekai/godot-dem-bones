@@ -1,4 +1,4 @@
-﻿# Third Party Licenses
+# Third Party Licenses
 
 Modules in this software package use following third party libraries:
 - Dem Bones library (include/DemBones) uses Eigen.
@@ -42,7 +42,7 @@ Third party licenses apply to this software package as detailed below:
     means any form of the work other than Source Code Form.
 
 1.7. "Larger Work"
-    means a work that combines Covered Software with other material, in 
+    means a work that combines Covered Software with other material, in
     a separate file or files, that is not Covered Software.
 
 1.8. "License"

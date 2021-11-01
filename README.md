@@ -1,7 +1,7 @@
 # Dem Bones
 
-This repository contains an implementation of [Smooth Skinning Decomposition with Rigid Bones](http://binh.graphics/papers/2012sa-ssdr/), 
-an automated algorithm to extract the *Linear Blend Skinning* (LBS) with bone transformations from a set of example meshes. 
+This repository contains an implementation of [Smooth Skinning Decomposition with Rigid Bones](http://binh.graphics/papers/2012sa-ssdr/),
+an automated algorithm to extract the *Linear Blend Skinning* (LBS) with bone transformations from a set of example meshes.
 *Skinning Decomposition* can be used in various tasks:
 
 - converting any animated mesh sequence, e.g. geometry cache, to LBS, which can be replayed in popular game engines,
@@ -17,7 +17,7 @@ This project is named after "The Skeleton Dance" by Super Simple Songs.
 
 ## References
 
-If you use the library or the command line tool, please cite the paper:  
+If you use the library or the command line tool, please cite the paper:
 
 > *Binh Huy Le* and *Zhigang Deng*. **[Smooth Skinning Decomposition with Rigid Bones](http://binh.graphics/papers/2012sa-ssdr/)**. ACM Transactions on Graphics 31(6), Proceedings of ACM SIGGRAPH Asia 2012.
 
@@ -31,7 +31,7 @@ BibTeX:
     volume = {31},
     number = {6},
     year = {2012}
-} 
+}
 ```
 
 The skinning weights smoothing regularization was published in the paper:

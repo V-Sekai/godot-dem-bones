@@ -20,63 +20,62 @@
 #endif
 
 namespace Dem {
-
 /** @mainpage Overview
-        Main elements:
-        - @ref DemBones : base class with the core solver using relative bone
+		Main elements:
+		- @ref DemBones : base class with the core solver using relative bone
    transformations DemBones::bone_transform_mat
-        - @ref DemBonesExt : extended class to handle hierarchical skeleton with
+		- @ref DemBonesExt : extended class to handle hierarchical skeleton with
    local rotations/translations and bind matrices
-        - DemBones/MatBlocks.h: macros to access sub-blocks of packing
+		- DemBones/MatBlocks.h: macros to access sub-blocks of packing
    transformation/position matrices for convenience
 
-        Include DemBones/DemBonesExt.h (or DemBones/DemBones.h) with optional
+		Include DemBones/DemBonesExt.h (or DemBones/DemBones.h) with optional
    DemBones/MatBlocks.h then follow these steps to use the library:
-        -# Load required data in the base class:
-                - Rest shapes: DemBones::rest_pose_geometry, DemBones::fv, DemBones::num_vertices
-                - Sequence: DemBones::vertex, DemBones::num_total_frames, DemBones::frame_start_index,
+		-# Load required data in the base class:
+				- Rest shapes: DemBones::rest_pose_geometry, DemBones::fv, DemBones::num_vertices
+				- Sequence: DemBones::vertex, DemBones::num_total_frames, DemBones::frame_start_index,
    DemBones::frame_subject_id, DemBones::num_subjects
-                - Number of bones DemBones::num_bones
-        -# Load optional data in the base class:
-                - Skinning weights DemBones::skinning_weights and weights soft-lock
+				- Number of bones DemBones::num_bones
+		-# Load optional data in the base class:
+				- Skinning weights DemBones::skinning_weights and weights soft-lock
    DemBones::lock_weight
-                - Bone transformations DemBones::bone_transform_mat and bones hard-lock
+				- Bone transformations DemBones::bone_transform_mat and bones hard-lock
    DemBones::lock_mat
-        -# [@c optional] Set parameters in the base class:
-                - DemBones::nIters
-                - DemBones::nInitIters
-                - DemBones::nTransIters, DemBones::transAffine,
+		-# [@c optional] Set parameters in the base class:
+				- DemBones::nIters
+				- DemBones::nInitIters
+				- DemBones::nTransIters, DemBones::transAffine,
    DemBones::transAffineNorm
-                - DemBones::nWeightsIters, DemBones::nnz,
+				- DemBones::nWeightsIters, DemBones::nnz,
    DemBones::weightsSmooth, DemBones::weightsSmoothStep, DemBones::weightEps
-        -# [@c optional] Setup extended class:
-                - Load data: DemBonesExt::parent, DemBonesExt::preMulInv,
+		-# [@c optional] Setup extended class:
+				- Load data: DemBonesExt::parent, DemBonesExt::preMulInv,
    DemBonesExt::rotOrder, DemBonesExt::orient, DemBonesExt::bind
-                - Set parameter DemBonesExt::bindUpdate
-        -# [@c optional] Override callback functions (cb...) in the base class
+				- Set parameter DemBonesExt::bindUpdate
+		-# [@c optional] Override callback functions (cb...) in the base class
    @ref DemBones
-        -# Call decomposition function DemBones::compute(),
+		-# Call decomposition function DemBones::compute(),
    DemBones::computeWeights(), DemBones::computeTranformations(), or
    DemBones::init()
-        -# [@c optional] Get local transformations/bind poses with
+		-# [@c optional] Get local transformations/bind poses with
    DemBonesExt::computeRTB()
 */
 
 /** @class DemBones DemBones.h "DemBones/DemBones.h"
-        @brief Smooth skinning decomposition with rigid bones and sparse, convex
+		@brief Smooth skinning decomposition with rigid bones and sparse, convex
    weights
 
-        @details Setup the required data, parameters, and call either compute(),
+		@details Setup the required data, parameters, and call either compute(),
    computeWeights(), computeTranformations(), or init().
 
-        Callback functions and read-only values can be used to report progress
+		Callback functions and read-only values can be used to report progress
    and stop on convergence: cbInitSplitBegin(), cbInitSplitEnd(), cbIterBegin(),
    cbIterEnd(), cbWeightsBegin(), cbWeightsEnd(), cbTranformationsBegin(),
    cbTransformationsEnd(), cbTransformationsIterBegin(),
-        cbTransformationsIterEnd(), cbWeightsIterBegin(), cbWeightsIterEnd(),
+		cbTransformationsIterEnd(), cbWeightsIterBegin(), cbWeightsIterEnd(),
    rmse(), #iter, #iterTransformations, #iterWeights.
 
-        @b _Scalar is the floating-point data type. @b _AniMeshScalar is the
+		@b _Scalar is the floating-point data type. @b _AniMeshScalar is the
    floating-point data type of mesh sequence #vertex.
 */
 template <class _Scalar, class _AniMeshScalar>
@@ -122,7 +121,7 @@ public:
 	_Scalar weightEps = _Scalar(1e-15);
 
 	/** @brief Constructor and setting default parameters
-   */
+	 */
 	DemBones() { clear(); }
 
 	//! Number of vertices, typically indexed by @p i
@@ -156,10 +155,10 @@ public:
 	VectorX lock_weight;
 
 	/** @brief Bone transformations, @c size = [4*#num_total_frames*4, 4*#num_bones], #bone_transform_mat.@a blk4(@p k,
-     @p j) is the 4*4 relative transformation matrix of bone @p j at frame @p k
-          @details Note that the transformations are relative, that is #bone_transform_mat.@a
-     blk4(@p k, @p j) brings the global transformation of bone @p j from the
-     rest pose to the pose at frame @p k.
+	 @p j) is the 4*4 relative transformation matrix of bone @p j at frame @p k
+		  @details Note that the transformations are relative, that is #bone_transform_mat.@a
+	 blk4(@p k, @p j) brings the global transformation of bone @p j from the
+	 rest pose to the pose at frame @p k.
   */
 	MatrixX bone_transform_mat;
 
@@ -177,7 +176,7 @@ public:
 	std::vector<std::vector<int>> fv;
 
 	/** @brief Clear all data
-   */
+	 */
 	void clear() {
 		num_vertices = num_bones = num_subjects = num_total_frames = 0;
 		frame_start_index.resize(0);
@@ -194,19 +193,19 @@ public:
 	}
 
 	/** @brief Initialize missing skinning weights and/or bone transformations
-          @details Depending on the status of #skinning_weights and #bone_transform_mat, this function will:
-                  - Both #skinning_weights and #bone_transform_mat are already set: do nothing
-                  - Only one in #skinning_weights or #bone_transform_mat is missing (zero size): initialize
-     missing matrix, i.e. #skinning_weights (or #bone_transform_mat)
-                  - Both #skinning_weights and #bone_transform_mat are missing (zero size): initialize both with
-     rigid skinning using approximately #num_bones bones, i.e. values of #skinning_weights are 0 or 1.
-                  LBG-VQ clustering is peformed using mesh sequence #vertex, rest
-     pose geometries #rest_pose_geometry and topology #fv.
-                  @b Note: as the initialization does not use exactly #num_bones bones,
-     the value of #num_bones could be changed when both #skinning_weights and #bone_transform_mat are missing.
+		  @details Depending on the status of #skinning_weights and #bone_transform_mat, this function will:
+				  - Both #skinning_weights and #bone_transform_mat are already set: do nothing
+				  - Only one in #skinning_weights or #bone_transform_mat is missing (zero size): initialize
+	 missing matrix, i.e. #skinning_weights (or #bone_transform_mat)
+				  - Both #skinning_weights and #bone_transform_mat are missing (zero size): initialize both with
+	 rigid skinning using approximately #num_bones bones, i.e. values of #skinning_weights are 0 or 1.
+				  LBG-VQ clustering is peformed using mesh sequence #vertex, rest
+	 pose geometries #rest_pose_geometry and topology #fv.
+				  @b Note: as the initialization does not use exactly #num_bones bones,
+	 the value of #num_bones could be changed when both #skinning_weights and #bone_transform_mat are missing.
 
-          This function is called at the begining of every compute update
-     functions as a safeguard.
+		  This function is called at the begining of every compute update
+	 functions as a safeguard.
   */
 	void init() {
 		if (modelSize < 0)
@@ -257,18 +256,18 @@ public:
 	}
 
 	/** @brief Update bone transformations by running #nTransIters iterations with
-     #transAffine and #transAffineNorm regularizers
-          @details Required input data:
-                  - Rest shapes: #rest_pose_geometry, #fv, #num_vertices
-                  - Sequence: #vertex, #num_total_frames, #frame_start_index, #frame_subject_id, #num_subjects
-                  - Number of bones: #num_bones
+	 #transAffine and #transAffineNorm regularizers
+		  @details Required input data:
+				  - Rest shapes: #rest_pose_geometry, #fv, #num_vertices
+				  - Sequence: #vertex, #num_total_frames, #frame_start_index, #frame_subject_id, #num_subjects
+				  - Number of bones: #num_bones
 
-          Optional input data:
-                  - Skinning weights: #skinning_weights, #lock_weight
-                  - Bone transformations: #bone_transform_mat, #lock_mat
+		  Optional input data:
+				  - Skinning weights: #skinning_weights, #lock_weight
+				  - Bone transformations: #bone_transform_mat, #lock_mat
 
-          Output: #bone_transform_mat. Missing #skinning_weights and/or #bone_transform_mat (with zero size) will be initialized
-     by init().
+		  Output: #bone_transform_mat. Missing #skinning_weights and/or #bone_transform_mat (with zero size) will be initialized
+	 by init().
   */
 	void computeTranformations() {
 		if (nTransIters == 0)
@@ -302,18 +301,18 @@ public:
 	}
 
 	/** @brief Update skinning weights by running #nWeightsIters iterations with
-     #weightsSmooth and #weightsSmoothStep regularizers
-          @details Required input data:
-                  - Rest shapes: #rest_pose_geometry, #fv, #num_vertices
-                  - Sequence: #vertex, #num_total_frames, #frame_start_index, #frame_subject_id, #num_subjects
-                  - Number of bones: #num_bones
+	 #weightsSmooth and #weightsSmoothStep regularizers
+		  @details Required input data:
+				  - Rest shapes: #rest_pose_geometry, #fv, #num_vertices
+				  - Sequence: #vertex, #num_total_frames, #frame_start_index, #frame_subject_id, #num_subjects
+				  - Number of bones: #num_bones
 
-          Optional input data:
-                  - Skinning weights: #skinning_weights, #lock_weight
-                  - Bone transformations: #bone_transform_mat, #lock_mat
+		  Optional input data:
+				  - Skinning weights: #skinning_weights, #lock_weight
+				  - Bone transformations: #bone_transform_mat, #lock_mat
 
-          Output: #skinning_weights. Missing #skinning_weights and/or #bone_transform_mat (with zero size) will be initialized
-     by init().
+		  Output: #skinning_weights. Missing #skinning_weights and/or #bone_transform_mat (with zero size) will be initialized
+	 by init().
 
   */
 	void computeWeights() {
@@ -348,7 +347,7 @@ public:
 														   MatrixX::Identity(num_bones, num_bones)) +
 					   lock_weight(i) * MatrixX::Identity(num_bones, num_bones);
 				VectorX aTbi = (1 - lock_weight(i)) * (aTb.col(i) / reg_scale +
-														weightsSmooth * ws.col(i)) +
+															  weightsSmooth * ws.col(i)) +
 							   lock_weight(i) * skinning_weights.col(i);
 
 				VectorX x = (1 - lock_weight(i)) * ws.col(i) + lock_weight(i) * skinning_weights.col(i);
@@ -387,18 +386,18 @@ public:
 	}
 
 	/** @brief Skinning decomposition by #nIters iterations of alternative
-     updating weights and bone transformations
-          @details Required input data:
-                  - Rest shapes: #rest_pose_geometry, #fv, #num_vertices
-                  - Sequence: #vertex, #num_total_frames, #frame_start_index, #frame_subject_id, #num_subjects
-                  - Number of bones: #num_bones
+	 updating weights and bone transformations
+		  @details Required input data:
+				  - Rest shapes: #rest_pose_geometry, #fv, #num_vertices
+				  - Sequence: #vertex, #num_total_frames, #frame_start_index, #frame_subject_id, #num_subjects
+				  - Number of bones: #num_bones
 
-          Optional input data:
-                  - Skinning weights: #skinning_weights
-                  - Bone transformations: #bone_transform_mat
+		  Optional input data:
+				  - Skinning weights: #skinning_weights
+				  - Bone transformations: #bone_transform_mat
 
-          Output: #skinning_weights, #bone_transform_mat. Missing #skinning_weights and/or #bone_transform_mat (with zero size) will be
-     initialized by init().
+		  Output: #skinning_weights, #bone_transform_mat. Missing #skinning_weights and/or #bone_transform_mat (with zero size) will be
+	 initialized by init().
   */
 	void compute() {
 		init();
@@ -474,9 +473,9 @@ private:
 	int _iter, _iterTransformations, _iterWeights;
 
 	/** Best rigid transformation from covariance matrix
-          @param _qpT is the 4*4 covariance matrix
-          @param k is the frame number
-          @param j is the bone index
+		  @param _qpT is the 4*4 covariance matrix
+		  @param k is the frame number
+		  @param j is the bone index
   */
 	void qpT2m(const Matrix4 &_qpT, int k, int j) {
 		if (_qpT(3, 3) != 0) {
@@ -496,8 +495,8 @@ private:
 	}
 
 	/** Fitting error
-          @param i is the vertex index
-          @param j is the bone index
+		  @param i is the vertex index
+		  @param j is the bone index
   */
 	_Scalar errorVtxBone(int i, int j, bool par = true) {
 		_Scalar e = 0;
@@ -521,7 +520,7 @@ private:
 	};
 
 	/** Update labels of vertices
-   */
+	 */
 	void computeLabel() {
 		VectorX ei(num_vertices);
 		Eigen::VectorXi seed = Eigen::VectorXi::Constant(num_bones, -1);
@@ -587,7 +586,7 @@ private:
 	}
 
 	/** Update bone transformation from label
-   */
+	 */
 	void computeTransFromLabel() {
 		bone_transform_mat = Matrix4::Identity().replicate(num_total_frames, num_bones);
 		// #pragma omp parallel for
@@ -604,7 +603,7 @@ private:
 	}
 
 	/** Set matrix skinning_weights from label
-   */
+	 */
 	void labelToWeights() {
 		std::vector<Triplet, Eigen::aligned_allocator<Triplet>> trip(num_vertices);
 		for (int i = 0; i < num_vertices; i++)
@@ -615,9 +614,9 @@ private:
 	}
 
 	/** Split bone clusters
-          @param maxB is the maximum number of bones
-          @param threshold*2 is the minimum size of the bone cluster to be
-     splited
+		  @param maxB is the maximum number of bones
+		  @param threshold*2 is the minimum size of the bone cluster to be
+	 splited
   */
 	void split(int maxB, int threshold) {
 		// Centroids
@@ -686,7 +685,7 @@ private:
 	}
 
 	/** Remove bones with small number of associated vertices
-          @param threshold is the minimum number of vertices assigned to a bone
+		  @param threshold is the minimum number of vertices assigned to a bone
   */
 	void pruneBones(int threshold) {
 		Eigen::VectorXi s = Eigen::VectorXi::Zero(num_bones);
@@ -722,7 +721,7 @@ private:
 	}
 
 	/** Initialize skinning weights with rigid bind to the best bone
-   */
+	 */
 	void initWeights() {
 		label = Eigen::VectorXi::Constant(num_vertices, -1);
 		// #pragma omp parallel for
@@ -745,7 +744,7 @@ private:
 	MatrixX vuT;
 
 	/** Pre-compute vuT with bone translations affinity soft constraint
-   */
+	 */
 	void compute_vuT() {
 		vuT = MatrixX::Zero(num_total_frames * 4, num_bones * 4);
 		// #pragma omp parallel for
@@ -777,7 +776,7 @@ private:
 	} uuT;
 
 	/** Pre-compute uuT for bone transformations update
-   */
+	 */
 	void compute_uuT() {
 		Eigen::MatrixXi pos = Eigen::MatrixXi::Constant(num_bones, num_bones, -1);
 		// #pragma omp parallel for
@@ -833,7 +832,7 @@ private:
 	MatrixX mTm;
 
 	/** Pre-compute mTm for weights update
-   */
+	 */
 	void compute_mTm() {
 		Eigen::MatrixXi idx(2, num_bones * (num_bones + 1) / 2);
 		int nPairs = 0;
@@ -865,7 +864,7 @@ private:
 	MatrixX aTb;
 
 	/** Pre-compute aTb for weights update
-   */
+	 */
 	void compute_aTb() {
 		// #pragma omp parallel for
 		for (int i = 0; i < num_vertices; i++)
@@ -887,7 +886,7 @@ private:
 	Eigen::SparseLU<SparseMatrix> smoothSolver;
 
 	/** Pre-compute Laplacian and LU factorization
-   */
+	 */
 	void computeSmoothSolver() {
 		int nFV = (int)fv.size();
 
@@ -966,7 +965,7 @@ private:
 	MatrixX ws;
 
 	/** Implicit skinning weights Laplacian smoothing
-   */
+	 */
 	void compute_ws() {
 		ws = skinning_weights.transpose();
 		// #pragma omp parallel for
@@ -989,10 +988,10 @@ private:
 	ConvexLS<_Scalar> wSolver;
 
 	/** Pre-compute aTa for weights update on one vertex
-          @param i is the vertex index.
-          @param aTa is the by-reference output of A^TA for vertex i, where
-     A.size = (3*num_total_frames, num_bones), A.col(j).segment<3>(f*3) is the transformed position
-     of vertex i by bone j at frame f.
+		  @param i is the vertex index.
+		  @param aTa is the by-reference output of A^TA for vertex i, where
+	 A.size = (3*num_total_frames, num_bones), A.col(j).segment<3>(f*3) is the transformed position
+	 of vertex i by bone j at frame f.
   */
 	void compute_aTa(int i, MatrixX &aTa) {
 		aTa = MatrixX::Zero(num_bones, num_bones);
@@ -1006,7 +1005,6 @@ private:
 			}
 	}
 };
-
 } // namespace Dem
 
 #ifdef DEM_BONES_DEM_BONES_MAT_BLOCKS_UNDEFINED

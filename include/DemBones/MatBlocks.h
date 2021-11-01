@@ -4,10 +4,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 /** @file "DemBones/MatBlocks.h"
-        @brief Defines some macros to access sub-blocks of packing
+		@brief Defines some macros to access sub-blocks of packing
    transformation/position matrices for convenience
 
-        @details These definitions are not included by default although they are
+		@details These definitions are not included by default although they are
    used in @p DemBones and @p DemBonesExt (they are undefined at the end of the
    files).
 */
