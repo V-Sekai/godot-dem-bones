@@ -53,21 +53,21 @@ BakeBlendShapesPlugin::BakeBlendShapesPlugin(EditorNode *p_node) {
 	editor = p_node;
 	file_export_lib = memnew(EditorFileDialog);
 	editor->get_gui_base()->add_child(file_export_lib);
-	file_export_lib->set_title(TTR("Export Library"));
+	file_export_lib->set_title(RTR("Export Library"));
 	file_export_lib->set_file_mode(EditorFileDialog::FILE_MODE_SAVE_FILE);
 	file_export_lib->set_access(EditorFileDialog::ACCESS_FILESYSTEM);
 	file_export_lib->clear_filters();
 	file_export_lib->add_filter("*.glb");
 	file_export_lib->add_filter("*.gltf");
-	file_export_lib->set_title(TTR("Bake Blend Shapes..."));
-	String gltf_scene_name = TTR("Bake Blend Shapes");
+	file_export_lib->set_title(RTR("Bake Blend Shapes..."));
+	String gltf_scene_name = RTR("Bake Blend Shapes");
 	add_tool_menu_item(gltf_scene_name, callable_mp(this, &BakeBlendShapesPlugin::convert_scene_to_gltf2));
 }
 
 void BakeBlendShapesPlugin::convert_scene_to_gltf2() {
 	Node *root = editor->get_tree()->get_edited_scene_root();
 	if (!root) {
-		editor->show_accept(TTR("This operation can't be done without a scene."), TTR("OK"));
+		editor->show_accept(RTR("This operation can't be done without a scene."), RTR("OK"));
 		return;
 	}
 
