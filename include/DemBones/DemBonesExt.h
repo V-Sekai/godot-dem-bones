@@ -392,8 +392,8 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 		return p_mesh;
 	}
 
-	Map<StringName, Vector<TKey<TransformKey>>> transforms;
-	Map<StringName, Vector<TKey<BlendKey>>> blends;
+	HashMap<StringName, Vector<TKey<TransformKey>>> transforms;
+	HashMap<StringName, Vector<TKey<BlendKey>>> blends;
 	float FPS = 30.0f;
 	// TODO: Optimize
 	for (int32_t track_i = 0; track_i < anim->get_track_count(); track_i++) {
