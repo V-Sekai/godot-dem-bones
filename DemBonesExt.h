@@ -406,48 +406,53 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 	HashMap<StringName, Vector<TKey<TransformKey>>> transforms;
 	HashMap<StringName, Vector<TKey<BlendKey>>> blends;
 	float FPS = 30.0f;
-	for (int32_t track_i = 0; track_i < anim->get_track_count(); track_i++) {
-		String track_path = anim->track_get_path(track_i);
-		Animation::TrackType track_type = anim->track_get_type(track_i);
-		/* 
-		if (track_type == Animation::TYPE_POSITION_3D) {
-			const double increment = 1.0 / FPS;
-			double time = 0.0;
-			double length = anim->get_length();
-
+	bool last = false;
+	const double increment = 1.0 / FPS;
+	double time = 0.0;
+	double length = anim->get_length();
+	while (true) {
+		for (int32_t track_i = 0; track_i < anim->get_track_count(); track_i++) {
+			String track_path = anim->track_get_path(track_i);
+			Animation::TrackType track_type = anim->track_get_type(track_i);
+			if (track_type != Animation::TYPE_POSITION_3D && track_type != Animation::TYPE_SCALE_3D && track_type != Animation::TYPE_ROTATION_3D) {
+				continue;
+			}
 			::Vector3 base_loc;
 			::Quaternion base_rot;
 			::Vector3 base_scale = ::Vector3(1, 1, 1);
-
-			anim->transform_track_interpolate(track_i, 0.0f, &base_loc, &base_rot, &base_scale);
-
-			bool last = false;
+			anim->position_track_interpolate(track_i, 0.0f, &base_loc);
+			anim->rotation_track_interpolate(track_i, 0.0f, &base_rot);
+			anim->scale_track_interpolate(track_i, 0.0f, &base_scale);
 			Vector<Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::TransformKey>> transform_anims;
-			while (true) {
-				::Vector3 loc = base_loc;
-				::Quaternion rot = base_rot;
-				::Vector3 scale = base_scale;
+			::Vector3 loc = base_loc;
+			::Quaternion rot = base_rot;
+			::Vector3 scale = base_scale;
+			anim->position_track_interpolate(track_i, time, &loc);
+			anim->rotation_track_interpolate(track_i, time, &rot);
+			anim->scale_track_interpolate(track_i, time, &scale);
+			Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::TransformKey> key;
+			key.time = time;
+			TransformKey transform_key;
+			transform_key.loc = loc;
+			transform_key.rot = rot;
+			transform_key.scale = scale;
+			key.value = transform_key;
+			transform_anims.push_back(key);
+			transforms.insert(track_path, transform_anims);
+		}
+		if (last) {
+			break;
+		}
+		time += increment;
+		if (time >= length) {
+			last = true;
+			time = length;
+		}
+	}
 
-				anim->transform_track_interpolate(track_i, time, &loc, &rot, &scale);
-				Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::TransformKey> key;
-				key.time = time;
-				TransformKey transform_key;
-				transform_key.loc = loc;
-				transform_key.rot = rot;
-				transform_key.scale = scale;
-				key.value = transform_key;
-				transform_anims.push_back(key);
-				if (last) {
-					break;
-				}
-				time += increment;
-				if (time >= length) {
-					last = true;
-					time = length;
-				}
-				transforms.insert(track_path, transform_anims);
-			}
-		} else */
+	for (int32_t track_i = 0; track_i < anim->get_track_count(); track_i++) {
+		String track_path = anim->track_get_path(track_i);
+		Animation::TrackType track_type = anim->track_get_type(track_i);
 		if (track_type == Animation::TYPE_VALUE) {
 			const double increment = 1.0 / FPS;
 			double time = 0.0;
@@ -460,7 +465,6 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 			Vector<TKey<BlendKey>> blend_anims;
 			while (true) {
 				float weight = base_weight;
-
 				weight = anim->value_track_interpolate(track_i, time);
 				TKey<BlendKey> key;
 				key.time = time;
