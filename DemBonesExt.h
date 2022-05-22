@@ -107,7 +107,7 @@ public:
 	//! Bind transformation update, 0=keep original, 1=set translations to p-norm
 	//! centroids (using #transAffineNorm) and rotations to identity, 2=do 1 and
 	//! group joints
-	int bind_update;
+	int bind_update = 0;
 
 	int patience = 3;
 
@@ -193,21 +193,14 @@ private:
 
 	// transform key holds either Vector3 or Quaternion
 	template <class T>
-	struct TKey : public Key {
-		T value;
-	};
 	struct TransformKey {
 		::Vector3 loc;
 		::Quaternion rot;
 		::Vector3 scale;
 	};
-	struct BlendKey {
-		real_t weight;
-	};
 
 public:
-	Array convert_blend_shapes_without_bones(Array p_mesh, Array p_blends, Vector<StringName> p_blend_paths,
-			Vector<Ref<Animation>> p_anims);
+	Array convert_blend_shapes_without_bones(Array p_mesh, ::PackedVector3Array p_vertex_array, HashMap<String, Vector<::Vector3>> p_blends, Vector<Ref<Animation>> p_anims);
 };
 
 template <class _Scalar, class _AniMeshScalar>
@@ -420,7 +413,7 @@ void Dem::DemBonesExt<_Scalar, _AniMeshScalar>::to_rot(const Matrix3 &p_basis, V
 }
 
 template <class _Scalar, class _AniMeshScalar>
-Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bones(Array p_mesh, Array p_blends, Vector<StringName> p_blend_paths, Vector<Ref<Animation>> p_anims) {
+Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bones(Array p_mesh, ::PackedVector3Array p_vertex_array, HashMap<String, Vector<::Vector3>> p_blends, Vector<Ref<Animation>> p_anims) {
 	if (!p_anims.size()) {
 		return Array();
 	}
@@ -432,32 +425,33 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	if (!p_blends.size()) {
 		return p_mesh;
 	}
-	HashMap<StringName, Vector<TKey<BlendKey>>> blends;
+	Vector<PackedVector3Array> blends;
 	constexpr float FPS = 30.0f;
+	int32_t new_frames = anim->get_length() * FPS;
+	blends.resize(new_frames);
+	for (int32_t frame_i = 0; frame_i < new_frames; frame_i++) {
+		blends.write[frame_i] = p_vertex_array;
+	}
 	for (int32_t track_i = 0; track_i < anim->get_track_count(); track_i++) {
 		String track_path = anim->track_get_path(track_i);
 		Animation::TrackType track_type = anim->track_get_type(track_i);
 		if (track_type != Animation::TYPE_BLEND_SHAPE) {
 			continue;
 		}
+		float weight = 0.0f;
 		const double increment = 1.0 / FPS;
 		double time = 0.0;
 		double length = anim->get_length();
 		bool last = false;
-		Vector<TKey<BlendKey>> blend_anims;
 		while (true) {
-			float weight = 0.0f;
 			if (anim->blend_shape_track_interpolate(track_i, time, &weight) != OK) {
-				time += increment;
 				continue;
 			}
-			TKey<BlendKey> key;
-			key.time = time;
+			int32_t frame = time / FPS;
+			for (int32_t vertex_i = p_vertex_array.size(); vertex_i < p_vertex_array.size(); vertex_i++) {
+				blends.write[frame].write[vertex_i] = blends[frame][vertex_i].lerp(p_blends[track_path][vertex_i], weight);
+			}
 			time += increment;
-			BlendKey blend_key;
-			blend_key.weight = weight;
-			key.value = blend_key;
-			blend_anims.push_back(key);
 			if (last) {
 				break;
 			}
@@ -466,8 +460,19 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 				time = length;
 			}
 		}
-		blends.insert(track_path, blend_anims);
 	}
+	num_total_frames = p_vertex_array.size();
+	num_vertices = p_vertex_array.size();
+	vertex.resize(3 * num_total_frames, num_vertices);
+	for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
+		for (int32_t vertex_i = 0; vertex_i < blends[frame_i].size(); vertex_i++) {
+			const float &x = blends[frame_i][vertex_i].x;
+			const float &y = blends[frame_i][vertex_i].y;
+			const float &z = blends[frame_i][vertex_i].z;
+			vertex.col(vertex_i).segment(3 * frame_i, 3) << x, y, z;
+		}
+	}
+
 	num_subjects = 1;
 	num_total_frames = FPS * anim->get_length();
 	fTime.resize(num_total_frames);
@@ -484,75 +489,28 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 			frame_subject_id(frame_i) = subject_i;
 		}
 	}
-	PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
-	num_vertices = vertex_arrays.size();
-	vertex.resize(3 * num_total_frames, num_vertices);
-	for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
-		PackedVector3Array blend_vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
-		for (int32_t blend_path_i = 0; blend_path_i < p_blend_paths.size(); blend_path_i++) {
-			String blend_path = p_blend_paths[blend_path_i];
-			if (blend_path.is_empty()) {
-				continue;
-			}
-			Vector<TKey<BlendKey>> keys = blends[blend_path];
-			const Array &current_blend_array = p_blends[blend_path_i];
-			const PackedVector3Array &blend = current_blend_array[Mesh::ARRAY_VERTEX];
-			for (const TKey<BlendKey> &key : keys) {
-				// #pragma omp parallel for
-				for (int32_t vertex_i = 0; vertex_i < blend_vertex_arrays.size();
-						vertex_i++) {
-					const real_t &blend_pos_x = blend[vertex_i].x;
-					const real_t &blend_pos_y = blend[vertex_i].y;
-					const real_t &blend_pos_z = blend[vertex_i].z;
-					real_t &x = blend_vertex_arrays.write[vertex_i].x;
-					real_t &y = blend_vertex_arrays.write[vertex_i].y;
-					real_t &z = blend_vertex_arrays.write[vertex_i].z;
-					BlendKey blend_key = key.value;
-					x = Math::lerp(x, blend_pos_x, blend_key.weight);
-					y = Math::lerp(y, blend_pos_y, blend_key.weight);
-					z = Math::lerp(z, blend_pos_z, blend_key.weight);
-				}
-			}
-		}
-		for (int32_t vertex_i = 0; vertex_i < blend_vertex_arrays.size(); vertex_i++) {
-			float x = blend_vertex_arrays[vertex_i].x;
-			float y = blend_vertex_arrays[vertex_i].y;
-			float z = blend_vertex_arrays[vertex_i].z;
-			vertex.col(vertex_i).segment(3 * frame_i, 3) << x, y, z;
-		}
-	}
 	PackedInt32Array indices = p_mesh[Mesh::ARRAY_INDEX];
 
 	// Assume the mesh is a triangle mesh.
 	const int indices_in_tri = 3;
-	fv.resize(indices.size() / indices_in_tri);
+	fv.resize(indices.size() / 3);
 	for (int32_t index_i = 0; index_i < indices.size(); index_i += 3) {
 		std::vector<int> polygon_indices;
 		polygon_indices.resize(indices_in_tri);
 		polygon_indices[0] = indices[index_i / 3 + 0];
 		polygon_indices[1] = indices[index_i / 3 + 1];
 		polygon_indices[2] = indices[index_i / 3 + 2];
-		fv[index_i / indices_in_tri] = polygon_indices;
+		fv[index_i / 3] = polygon_indices;
 	}
 
 	rest_pose_geometry.resize(num_subjects * 3, num_vertices);
-	for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
+	for (int32_t vertex_i = 0; vertex_i < p_vertex_array.size();
 			vertex_i++) {
-		float pos_x = vertex_arrays[vertex_i].x;
-		float pos_y = vertex_arrays[vertex_i].y;
-		float pos_z = vertex_arrays[vertex_i].z;
+		float pos_x = p_vertex_array[vertex_i].x;
+		float pos_y = p_vertex_array[vertex_i].y;
+		float pos_z = p_vertex_array[vertex_i].z;
 		rest_pose_geometry.col(vertex_i) << pos_x, pos_y, pos_z;
 	}
-
-	// PackedInt32Array bones = p_mesh[Mesh::ARRAY_BONES];
-	// RBSet<int32_t> bone_set;
-
-	// for (int32_t bones_i = 0; bones_i < bones.size(); bones_i++) {
-	// 	bone_set.insert(bones[bones_i]);
-	// }
-	// if (bones.size()) {
-	// 	num_bones = bones.size();
-	// }
 	nnz = 4;
 	bind_update = 2;
 	MatrixX local_rotations;
@@ -561,8 +519,8 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	MatrixX local_bind_pose_rotation;
 	MatrixX local_bind_pose_translation;
 	bool degree_rot = true;
-	nIters = 20;
-	num_bones = 1024;
+	nIters = 10;
+	num_bones = 20;
 	nInitIters = 20;
 	DemBonesExt<_Scalar, _AniMeshScalar>::init();
 	DemBonesExt<_Scalar, _AniMeshScalar>::compute();

@@ -61,40 +61,32 @@ Error BlendShapeBake::convert_scene(Node *p_scene) {
 		if (surface_mesh.is_null()) {
 			continue;
 		}
+		if (!surface_mesh->get_blend_shape_count()) {
+			continue;
+		}
 		mesh_instance_3d->set_mesh(Ref<ArrayMesh>());
 		Ref<SurfaceTool> st;
 		st.instantiate();
-		st->begin(ArrayMesh::PRIMITIVE_TRIANGLES);
+		Ref<ArrayMesh> mesh;
+		mesh.instantiate();
 		for (int32_t surface_i = 0; surface_i < surface_mesh->get_surface_count(); surface_i++) {
+			st->clear();
+			st->begin(ArrayMesh::PRIMITIVE_TRIANGLES);
 			Array surface_arrays = surface_mesh->surface_get_arrays(surface_i);
-			Array blends_arrays = surface_mesh->surface_get_blend_shape_arrays(surface_i);
-			if (!blends_arrays.size()) {
-				continue;
-			}
+			HashMap<String, Vector<Vector3>> blends_arrays;
 			NodePath mesh_track;
-			Dem::DemBonesExt<double, float> bones;
 			Vector<StringName> p_blend_paths;
 			String mesh_path = p_scene->get_path_to(mesh_instance_3d);
 			for (int32_t blend_i = 0; blend_i < surface_mesh->get_blend_shape_count(); blend_i++) {
 				String blend_name = surface_mesh->get_blend_shape_name(blend_i);
-				p_blend_paths.push_back(mesh_path + ":blend_shapes/" + blend_name);
+				blends_arrays[mesh_path + ":blend_shapes/" + blend_name] = surface_mesh->surface_get_blend_shape_arrays(surface_i)[blend_i];
 			}
-			Vector<StringName> p_bone_paths;
-			String skeleton_path = mesh_instance_3d->get_skeleton_path();
-			Node *skeleton_node = mesh_instance_3d->get_node_or_null(skeleton_path);
-			Skeleton3D *skeleton = cast_to<Skeleton3D>(skeleton_node);
-			if (skeleton) {
-				for (int32_t bone_i = 0; bone_i < skeleton->get_bone_count(); bone_i++) {
-					StringName bone_name = skeleton->get_bone_name(bone_i);
-					p_bone_paths.push_back(skeleton_path + ":" + bone_name);
-				}
-			}
-			Array mesh_arrays = bones.convert_blend_shapes_without_bones(surface_arrays, blends_arrays, p_blend_paths, animations);
+			Dem::DemBonesExt<double, float> bones;
+			Array mesh_arrays = bones.convert_blend_shapes_without_bones(surface_arrays, surface_arrays[ArrayMesh::ARRAY_VERTEX], blends_arrays, animations);
 			st->create_from_triangle_arrays(mesh_arrays);
-			mesh_instance_3d->set_mesh(st->commit());
-			// TODO: fire 2022-05-22 Handle more than one mesh surface.
-			break;
+			mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, st->commit_to_arrays());
 		}
+		mesh_instance_3d->set_mesh(mesh);
 	}
 	return OK;
 }
