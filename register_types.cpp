@@ -36,20 +36,21 @@
 #ifdef TOOLS_ENABLED
 #include "bake_blend_shapes_plugin.h"
 #include "editor/editor_plugin.h"
-
 #endif
 
-#include "DemBones/DemBonesExt.h"
-
-void register_dem_bones_types() {
+void initialize_dem_bones_module(ModuleInitializationLevel p_level) {
+	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
 #ifndef _3D_DISABLED
-#ifdef TOOLS_ENABLED
-	EditorPlugins::add_by_type<BakeBlendShapesPlugin>();
-#endif
 	GDREGISTER_CLASS(BlendShapeBake);
-
+	}
+#ifdef TOOLS_ENABLED
+	if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
+	EditorPlugins::add_by_type<BakeBlendShapesPlugin>();
+	}
+#endif
 #endif
 }
 
-void unregister_dem_bones_types() {
+void uninitialize_dem_bones_module(ModuleInitializationLevel p_level) {
 }
+

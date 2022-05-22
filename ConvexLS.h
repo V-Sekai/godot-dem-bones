@@ -7,8 +7,8 @@
 #define DEM_BONES_CONVEX_LS
 
 #include "Indexing.h"
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
+#include "thirdparty/eigen/Eigen/Eigen/Dense"
+#include "thirdparty/eigen/Eigen/Eigen/StdVector"
 
 namespace Dem {
 /** @class ConvexLS ConvexLS.h "DemBones/ConvexLS.h"

@@ -31,7 +31,9 @@
 #ifndef DEM_BONES_REGISTER_TYPES_H
 #define DEM_BONES_REGISTER_TYPES_H
 
-void register_dem_bones_types();
-void unregister_dem_bones_types();
+#include "modules/register_module_types.h"
+
+void initialize_dem_bones_module(ModuleInitializationLevel p_level);
+void uninitialize_dem_bones_module(ModuleInitializationLevel p_level);
 
 #endif // DEM_BONES_REGISTER_TYPES_H

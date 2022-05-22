@@ -10,7 +10,7 @@
 #pragma warning(disable : 4172)
 #endif
 
-#include <Eigen/Dense>
+#include "thirdparty/eigen/Eigen/Eigen/Dense"
 
 namespace Dem {
 /** NullaryOp forward mapping for matrix with row indices and column indices,

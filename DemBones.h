@@ -7,9 +7,9 @@
 #define DEM_BONES_DEM_BONES
 
 #include "ConvexLS.h"
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
-#include <Eigen/StdVector>
+#include "thirdparty/eigen/Eigen/Eigen/Dense"
+#include "thirdparty/eigen/Eigen/Eigen/Sparse"
+#include "thirdparty/eigen/Eigen/Eigen/StdVector"
 #include <algorithm>
 #include <queue>
 #include <set>

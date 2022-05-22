@@ -9,7 +9,7 @@
 #include "DemBones.h"
 
 #include <stdint.h>
-#include <Eigen/Geometry>
+#include <thirdparty/eigen/Eigen/Eigen/Geometry>
 
 #ifndef DEM_BONES_MAT_BLOCKS
 #include "MatBlocks.h"
@@ -399,79 +399,74 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 	for (int32_t track_i = 0; track_i < anim->get_track_count(); track_i++) {
 		String track_path = anim->track_get_path(track_i);
 		Animation::TrackType track_type = anim->track_get_type(track_i);
-#ifndef _MSC_VER
-#warning this needs to be redone
-#endif
-#if 0
-				if (track_type == Animation::TYPE_TRANSFORM3D) {
-					const double increment = 1.0 / FPS;
-					double time = 0.0;
-					double length = anim->get_length();
+		if (track_type == Animation::TYPE_POSITION_3D) {
+			const double increment = 1.0 / FPS;
+			double time = 0.0;
+			double length = anim->get_length();
 
-					::Vector3 base_loc;
-					::Quaternion base_rot;
-					::Vector3 base_scale = ::Vector3(1, 1, 1);
+			::Vector3 base_loc;
+			::Quaternion base_rot;
+			::Vector3 base_scale = ::Vector3(1, 1, 1);
 
-					anim->transform_track_interpolate(track_i, 0.0f, &base_loc, &base_rot, &base_scale);
+			anim->transform_track_interpolate(track_i, 0.0f, &base_loc, &base_rot, &base_scale);
 
-					bool last = false;
-					Vector<Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::TransformKey>> transform_anims;
-					while (true) {
-						::Vector3 loc = base_loc;
-						::Quaternion rot = base_rot;
-						::Vector3 scale = base_scale;
+			bool last = false;
+			Vector<Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::TransformKey>> transform_anims;
+			while (true) {
+				::Vector3 loc = base_loc;
+				::Quaternion rot = base_rot;
+				::Vector3 scale = base_scale;
 
-						anim->transform_track_interpolate(track_i, time, &loc, &rot, &scale);
-						Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::TransformKey> key;
-						key.time = time;
-						TransformKey transform_key;
-						transform_key.loc = loc;
-						transform_key.rot = rot;
-						transform_key.scale = scale;
-						key.value = transform_key;
-						transform_anims.push_back(key);
-						if (last) {
-							break;
-						}
-						time += increment;
-						if (time >= length) {
-							last = true;
-							time = length;
-						}
-						transforms.insert(track_path, transform_anims);
-					}
-				} else if (track_type == Animation::TYPE_VALUE) {
-					const double increment = 1.0 / FPS;
-					double time = 0.0;
-					double length = anim->get_length();
-
-					float base_weight = 0.0f;
-					base_weight = anim->value_track_interpolate(track_i, 0.0f);
-
-					bool last = false;
-					Vector<TKey<BlendKey>> blend_anims;
-					while (true) {
-						float weight = base_weight;
-
-						weight = anim->value_track_interpolate(track_i, time);
-						TKey<BlendKey> key;
-						key.time = time;
-						BlendKey blend_key;
-						blend_key.weight = weight;
-						key.value = blend_key;
-						blend_anims.push_back(key);
-						if (last) {
-							break;
-						}
-						time += increment;
-						if (time >= length) {
-							last = true;
-							time = length;
-						}
-					}
-					blends.insert(track_path, blend_anims);
+				anim->transform_track_interpolate(track_i, time, &loc, &rot, &scale);
+				Dem::DemBonesExt<double, float>::TKey<Dem::DemBonesExt<double, float>::TransformKey> key;
+				key.time = time;
+				TransformKey transform_key;
+				transform_key.loc = loc;
+				transform_key.rot = rot;
+				transform_key.scale = scale;
+				key.value = transform_key;
+				transform_anims.push_back(key);
+				if (last) {
+					break;
 				}
-#endif
+				time += increment;
+				if (time >= length) {
+					last = true;
+					time = length;
+				}
+				transforms.insert(track_path, transform_anims);
+			}
+		} else if (track_type == Animation::TYPE_VALUE) {
+			const double increment = 1.0 / FPS;
+			double time = 0.0;
+			double length = anim->get_length();
+
+			float base_weight = 0.0f;
+			base_weight = anim->value_track_interpolate(track_i, 0.0f);
+
+			bool last = false;
+			Vector<TKey<BlendKey>> blend_anims;
+			while (true) {
+				float weight = base_weight;
+
+				weight = anim->value_track_interpolate(track_i, time);
+				TKey<BlendKey> key;
+				key.time = time;
+				BlendKey blend_key;
+				blend_key.weight = weight;
+				key.value = blend_key;
+				blend_anims.push_back(key);
+				if (last) {
+					break;
+				}
+				time += increment;
+				if (time >= length) {
+					last = true;
+					time = length;
+				}
+			}
+			blends.insert(track_path, blend_anims);
+		}
 	}
 	ERR_FAIL_NULL_V(p_skeleton, Array());
 	num_subjects = 1;

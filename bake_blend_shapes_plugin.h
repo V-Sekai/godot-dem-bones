@@ -31,13 +31,12 @@
 #ifndef BAKE_BLEND_SHAPES_PLUGIN_H
 #define BAKE_BLEND_SHAPES_PLUGIN_H
 
-#if TOOLS_ENABLED
+#ifdef TOOLS_ENABLED
 #include "editor/editor_plugin.h"
 
 class BakeBlendShapesPlugin : public EditorPlugin {
 	GDCLASS(BakeBlendShapesPlugin, EditorPlugin);
 
-	EditorNode *editor = nullptr;
 	EditorFileDialog *file_export_lib = nullptr;
 	void _gltf2_dialog_action(String p_file);
 	void convert_scene_to_gltf2();
@@ -45,7 +44,7 @@ class BakeBlendShapesPlugin : public EditorPlugin {
 public:
 	virtual String get_name() const override;
 	bool has_main_screen() const override;
-	BakeBlendShapesPlugin(class EditorNode *p_node);
+	BakeBlendShapesPlugin();
 };
 #endif // TOOLS_ENABLED
 #endif // BAKE_BLEND_SHAPES_PLUGIN_H
