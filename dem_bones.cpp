@@ -80,12 +80,11 @@ Error BlendShapeBake::convert_scene(Node *p_scene) {
 				String skeleton_path = mesh_instance_3d->get_skeleton_path();
 				Node *skeleton_node = mesh_instance_3d->get_node_or_null(skeleton_path);
 				Skeleton3D *skeleton = cast_to<Skeleton3D>(skeleton_node);
-				if (!skeleton) {
-					continue;
-				}
-				for (int32_t bone_i = 0; bone_i < skeleton->get_bone_count(); bone_i++) {
-					StringName bone_name = skeleton->get_bone_name(bone_i);
-					p_bone_paths.push_back(skeleton_path + ":" + bone_name);
+				if (skeleton) {
+					for (int32_t bone_i = 0; bone_i < skeleton->get_bone_count(); bone_i++) {
+						StringName bone_name = skeleton->get_bone_name(bone_i);
+						p_bone_paths.push_back(skeleton_path + ":" + bone_name);
+					}
 				}
 				Array bone_mesh = bones.convert(surface_arrays, blends_arrays, skeleton, p_blend_paths, p_bone_paths, animations);
 			}
