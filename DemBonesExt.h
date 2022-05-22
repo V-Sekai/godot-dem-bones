@@ -432,7 +432,6 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	if (!p_blends.size()) {
 		return p_mesh;
 	}
-	HashMap<StringName, Vector<TKey<TransformKey>>> transforms;
 	HashMap<StringName, Vector<TKey<BlendKey>>> blends;
 	constexpr float FPS = 30.0f;
 	for (int32_t track_i = 0; track_i < anim->get_track_count(); track_i++) {
@@ -470,8 +469,8 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 		blends.insert(track_path, blend_anims);
 	}
 	num_subjects = 1;
-	fTime.resize(FPS * anim->get_length());
-	num_total_frames = fTime.size();
+	num_total_frames = FPS * anim->get_length();
+	fTime.resize(num_total_frames);
 	frame_start_index.resize(num_subjects + 1);
 	frame_start_index(0) = 0;
 
@@ -487,20 +486,12 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	}
 	PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
 	num_vertices = vertex_arrays.size();
-	rest_pose_geometry.resize(num_subjects * 3, num_vertices);
-	for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
-			vertex_i++) {
-		float pos_x = vertex_arrays[vertex_i].x;
-		float pos_y = vertex_arrays[vertex_i].y;
-		float pos_z = vertex_arrays[vertex_i].z;
-		rest_pose_geometry.col(vertex_i) << pos_x, pos_y, pos_z;
-	}
 	vertex.resize(3 * num_total_frames, num_vertices);
 	for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
 		PackedVector3Array blend_vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
 		for (int32_t blend_path_i = 0; blend_path_i < p_blend_paths.size(); blend_path_i++) {
 			String blend_path = p_blend_paths[blend_path_i];
-			if (!blends.has(blend_path)) {
+			if (blend_path.is_empty()) {
 				continue;
 			}
 			Vector<TKey<BlendKey>> keys = blends[blend_path];
@@ -510,16 +501,24 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 				// #pragma omp parallel for
 				for (int32_t vertex_i = 0; vertex_i < blend_vertex_arrays.size();
 						vertex_i++) {
-					const float &blend_pos_x = blend[vertex_i].x;
-					const float &blend_pos_y = blend[vertex_i].y;
-					const float &blend_pos_z = blend[vertex_i].z;
+					const real_t &blend_pos_x = blend[vertex_i].x;
+					const real_t &blend_pos_y = blend[vertex_i].y;
+					const real_t &blend_pos_z = blend[vertex_i].z;
+					real_t &x = blend_vertex_arrays.write[vertex_i].x;
+					real_t &y = blend_vertex_arrays.write[vertex_i].y;
+					real_t &z = blend_vertex_arrays.write[vertex_i].z;
 					BlendKey blend_key = key.value;
-					float pos_x = Math::lerp(pos_x, blend_pos_x, blend_key.weight);
-					float pos_y = Math::lerp(pos_y, blend_pos_y, blend_key.weight);
-					float pos_z = Math::lerp(pos_z, blend_pos_z, blend_key.weight);
-					vertex.col((vertex_i * frame_i) + vertex_i) << pos_x, pos_y, pos_z;
+					x = Math::lerp(x, blend_pos_x, blend_key.weight);
+					y = Math::lerp(y, blend_pos_y, blend_key.weight);
+					z = Math::lerp(z, blend_pos_z, blend_key.weight);
 				}
 			}
+		}
+		for (int32_t vertex_i = 0; vertex_i < blend_vertex_arrays.size(); vertex_i++) {
+			float x = blend_vertex_arrays[vertex_i].x;
+			float y = blend_vertex_arrays[vertex_i].y;
+			float z = blend_vertex_arrays[vertex_i].z;
+			vertex.col(vertex_i).segment(3 * frame_i, 3) << x, y, z;
 		}
 	}
 	PackedInt32Array indices = p_mesh[Mesh::ARRAY_INDEX];
@@ -536,11 +535,23 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 		fv[index_i / indices_in_tri] = polygon_indices;
 	}
 
+	rest_pose_geometry.resize(num_subjects * 3, num_vertices);
+	for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
+			vertex_i++) {
+		float pos_x = vertex_arrays[vertex_i].x;
+		float pos_y = vertex_arrays[vertex_i].y;
+		float pos_z = vertex_arrays[vertex_i].z;
+		rest_pose_geometry.col(vertex_i) << pos_x, pos_y, pos_z;
+	}
+
 	// PackedInt32Array bones = p_mesh[Mesh::ARRAY_BONES];
 	// RBSet<int32_t> bone_set;
 
 	// for (int32_t bones_i = 0; bones_i < bones.size(); bones_i++) {
 	// 	bone_set.insert(bones[bones_i]);
+	// }
+	// if (bones.size()) {
+	// 	num_bones = bones.size();
 	// }
 	nnz = 4;
 	bind_update = 2;
@@ -550,11 +561,13 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	MatrixX local_bind_pose_rotation;
 	MatrixX local_bind_pose_translation;
 	bool degree_rot = true;
-	num_bones = 256;
-	nInitIters = 10;
-	nIters = 100;
+	nIters = 20;
+	num_bones = 1024;
+	nInitIters = 20;
+	DemBonesExt<_Scalar, _AniMeshScalar>::init();
 	DemBonesExt<_Scalar, _AniMeshScalar>::compute();
 	DemBonesExt<_Scalar, _AniMeshScalar>::computeRTB(0, local_rotations, local_translations, gb, local_bind_pose_rotation, local_bind_pose_translation, degree_rot);
+	print_line(vformat("The number of bones %d", bone_name.size()));
 	return p_mesh;
 }
 } // namespace Dem
