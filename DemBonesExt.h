@@ -9,7 +9,7 @@
 #include "DemBones.h"
 
 #include <stdint.h>
-#include <thirdparty/eigen/Eigen/Eigen/Geometry>
+#include "thirdparty/eigen/Eigen/Eigen/Geometry"
 
 #ifndef DEM_BONES_MAT_BLOCKS
 #include "MatBlocks.h"
@@ -200,7 +200,7 @@ private:
 	};
 
 public:
-	Array convert(Array p_mesh, Array p_blends, Skeleton3D *p_skeleton, Vector<StringName> p_blend_paths, Vector<StringName> p_bone_paths,
+	Array convert_blend_shapes_without_bones(Array p_mesh, Array p_blends, Vector<StringName> p_blend_paths,
 			Vector<Ref<Animation>> p_anims);
 };
 
@@ -253,7 +253,7 @@ void Dem::DemBonesExt<_Scalar, _AniMeshScalar>::computeRTB(int s, MatrixX &r_loc
 
 	// #pragma omp parallel for
 	for (int bone_i = 0; bone_i < num_bones; bone_i++) {
-		Eigen::Vector3i ro = this->rotOrder.col(this->j).template segment<3>(s * 3);
+		Eigen::Vector3i ro = rot_order.col(bone_i).template segment<3>(s * 3);
 
 		Vector3 ov = orient.vec3(s, bone_i) * EIGEN_PI / 180;
 		Matrix3 invOM =
@@ -390,10 +390,7 @@ void Dem::DemBonesExt<_Scalar, _AniMeshScalar>::to_rot(const Matrix3 &p_basis, V
 }
 
 template <class _Scalar, class _AniMeshScalar>
-Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_blends, Skeleton3D *p_skeleton, Vector<StringName> p_blend_paths, Vector<StringName> p_bone_paths, Vector<Ref<Animation>> p_anims) {
-	if (p_skeleton) {
-		return Array();
-	}
+Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bones(Array p_mesh, Array p_blends, Vector<StringName> p_blend_paths, Vector<Ref<Animation>> p_anims) {
 	if (!p_anims.size()) {
 		return Array();
 	}
@@ -412,6 +409,7 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 		String track_path = anim->track_get_path(track_i);
 		Animation::TrackType track_type = anim->track_get_type(track_i);
 		if (track_type != Animation::TYPE_BLEND_SHAPE) {
+			continue;
 		}
 		const double increment = 1.0 / FPS;
 		double time = 0.0;
@@ -457,21 +455,17 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 			frame_subject_id(frame_i) = subject_i;
 		}
 	}
-
+	PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
+	num_vertices = vertex_arrays.size();
 	rest_pose_geometry.resize(num_subjects * 3, num_vertices);
-	{
-		PackedVector3Array vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
-		num_vertices = vertex_arrays.size();
-		rest_pose_geometry.resize(num_subjects * 3, num_vertices);
-		for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
-				vertex_i++) {
-			float pos_x = vertex_arrays[vertex_i].x;
-			float pos_y = vertex_arrays[vertex_i].y;
-			float pos_z = vertex_arrays[vertex_i].z;
-			rest_pose_geometry.col(vertex_i) << pos_x, pos_y, pos_z;
-		}
+	for (int32_t vertex_i = 0; vertex_i < vertex_arrays.size();
+			vertex_i++) {
+		float pos_x = vertex_arrays[vertex_i].x;
+		float pos_y = vertex_arrays[vertex_i].y;
+		float pos_z = vertex_arrays[vertex_i].z;
+		rest_pose_geometry.col(vertex_i) << pos_x, pos_y, pos_z;
 	}
-	vertex.resize(3, num_vertices * num_total_frames);
+	vertex.resize(3 * num_total_frames, num_vertices);
 	for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
 		PackedVector3Array blend_vertex_arrays = p_mesh[Mesh::ARRAY_VERTEX];
 		for (int32_t blend_path_i = 0; blend_path_i < p_blend_paths.size(); blend_path_i++) {
@@ -486,31 +480,21 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 				// #pragma omp parallel for
 				for (int32_t vertex_i = 0; vertex_i < blend_vertex_arrays.size();
 						vertex_i++) {
-					BlendKey blend_key = key.value;
-					float &pos_x = blend_vertex_arrays.write[vertex_i].x;
 					const float &blend_pos_x = blend[vertex_i].x;
-					float &pos_y = blend_vertex_arrays.write[vertex_i].y;
 					const float &blend_pos_y = blend[vertex_i].y;
-					float &pos_z = blend_vertex_arrays.write[vertex_i].z;
 					const float &blend_pos_z = blend[vertex_i].z;
-					pos_x = Math::lerp(pos_x, blend_pos_x, blend_key.weight);
-					pos_y = Math::lerp(pos_y, blend_pos_y, blend_key.weight);
-					pos_z = Math::lerp(pos_z, blend_pos_z, blend_key.weight);
+					BlendKey blend_key = key.value;
+					float pos_x = Math::lerp(pos_x, blend_pos_x, blend_key.weight);
+					float pos_y = Math::lerp(pos_y, blend_pos_y, blend_key.weight);
+					float pos_z = Math::lerp(pos_z, blend_pos_z, blend_key.weight);
+					vertex.col((vertex_i * frame_i) + vertex_i) << pos_x, pos_y, pos_z;
 				}
 			}
-		}
-		// #pragma omp parallel for
-		for (int32_t vertex_i = 0; vertex_i < blend_vertex_arrays.size();
-				vertex_i++) {
-			const float &pos_x = blend_vertex_arrays.write[vertex_i].x;
-			const float &pos_y = blend_vertex_arrays.write[vertex_i].y;
-			const float &pos_z = blend_vertex_arrays.write[vertex_i].z;
-			vertex.col((vertex_i * frame_i) + vertex_i) << pos_x, pos_y, pos_z;
 		}
 	}
 	PackedInt32Array indices = p_mesh[Mesh::ARRAY_INDEX];
 
-	// Assume triangles
+	// Assume the mesh is a triangle mesh.
 	const int indices_in_tri = 3;
 	fv.resize(indices.size() / indices_in_tri);
 	for (int32_t index_i = 0; index_i < indices.size(); index_i += 3) {
@@ -528,31 +512,38 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 	for (int32_t bones_i = 0; bones_i < bones.size(); bones_i++) {
 		bone_set.insert(bones[bones_i]);
 	}
-	num_bones = bone_set.size();
-	num_total_frames = 1;
+	nnz = 8;
 	const int iteration_max = 100;
-	double tolerance = 0.0;
+	double tolerance = 1e-3;
 	int patience = 3;
-	DemBonesExt<_Scalar, _AniMeshScalar>::compute();
+	num_bones = 1024;
 	double prevErr = -1;
 	int np = 3;
+	bind_update = 2;
+	MatrixX local_rotations;
+	MatrixX local_translations;
+	MatrixX gb;
+	MatrixX local_bind_pose_rotation;
+	MatrixX local_bind_pose_translation;
+	bool degree_rot = true;
+	DemBonesExt<_Scalar, _AniMeshScalar>::compute();
 	for (int32_t iteration_i = 0; iteration_i < iteration_max; iteration_i++) {
-		double err = DemBones<_Scalar, _AniMeshScalar>::rmse();
-		print_line("RMSE = " + itos(err));
+		double err = DemBonesExt<_Scalar, _AniMeshScalar>::rmse();
 		if ((err < prevErr * (1 + weightEps)) &&
 				((prevErr - err) < tolerance * prevErr)) {
 			np--;
 			if (np == 0) {
-				print_line("Convergence is reached!");
-				return Array();
+				print_line("Convergence has been reached.");
+				break;
 			}
 		} else {
 			np = patience;
 		}
 		prevErr = err;
-		return Array();
+		print_line("Root mean square error is " + itos(prevErr));
 	}
-	return Array();
+	DemBonesExt<_Scalar, _AniMeshScalar>::computeRTB(0, local_rotations, local_translations, gb, local_bind_pose_rotation, local_bind_pose_translation, degree_rot);
+	return p_mesh;
 }
 } // namespace Dem
 #ifdef DEM_BONES_DEM_BONES_EXT_MAT_BLOCKS_UNDEFINED
