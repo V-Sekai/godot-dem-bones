@@ -39,8 +39,8 @@
 #endif
 
 void initialize_dem_bones_module(ModuleInitializationLevel p_level) {
-	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
 #ifndef _3D_DISABLED
+	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
 	GDREGISTER_CLASS(BlendShapeBake);
 	}
 #ifdef TOOLS_ENABLED
