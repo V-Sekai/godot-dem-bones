@@ -469,7 +469,7 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 			const float &x = blends[frame_i][vertex_i].x;
 			const float &y = blends[frame_i][vertex_i].y;
 			const float &z = blends[frame_i][vertex_i].z;
-			vertex.col(vertex_i).segment(3 * frame_i, 3) << x, y, z;
+			vertex.col(vertex_i).segment(frame_i, 3) << x, y, z;
 		}
 	}
 
@@ -480,13 +480,13 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	frame_start_index(0) = 0;
 
 	for (int s = 0; s < num_subjects; s++) {
-		frame_start_index(s + 1) = frame_start_index(s) + fTime.size();
+		frame_start_index(s + 1) = 0; // TODO: fire 2022-05-22 Support different start frame
 	}
 
 	frame_subject_id.resize(num_total_frames);
 	for (int subject_i = 0; subject_i < num_subjects; subject_i++) {
 		for (int frame_i = frame_start_index(subject_i); frame_i < frame_start_index(subject_i + 1); frame_i++) {
-			frame_subject_id(frame_i) = subject_i;
+			frame_subject_id(frame_i) = 0; // TODO: fire 2022-05-22 Support multiple animations
 		}
 	}
 	PackedInt32Array indices = p_mesh[Mesh::ARRAY_INDEX];
@@ -502,8 +502,6 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 		polygon_indices[2] = indices[index_i / 3 + 2];
 		fv[index_i / 3] = polygon_indices;
 	}
-
-	rest_pose_geometry.resize(num_subjects * 3, num_vertices);
 	for (int32_t vertex_i = 0; vertex_i < p_vertex_array.size();
 			vertex_i++) {
 		float pos_x = p_vertex_array[vertex_i].x;
@@ -513,19 +511,47 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	}
 	nnz = 4;
 	bind_update = 2;
-	MatrixX local_rotations;
-	MatrixX local_translations;
-	MatrixX gb;
-	MatrixX local_bind_pose_rotation;
-	MatrixX local_bind_pose_translation;
-	bool degree_rot = true;
 	nIters = 10;
 	num_bones = 20;
 	nInitIters = 20;
 	DemBonesExt<_Scalar, _AniMeshScalar>::init();
 	DemBonesExt<_Scalar, _AniMeshScalar>::compute();
-	DemBonesExt<_Scalar, _AniMeshScalar>::computeRTB(0, local_rotations, local_translations, gb, local_bind_pose_rotation, local_bind_pose_translation, degree_rot);
+	bool needCreateJoints = (bone_name.size() == 0);
+	// double radius;
+	if (needCreateJoints) {
+		bone_name.resize(num_bones);
+		for (int j = 0; j < num_bones; j++) {
+			std::ostringstream s;
+			s << "joint" << j;
+			bone_name[j] = s.str();
+		}
+		// radius = sqrt((rest_pose_geometry - (rest_pose_geometry.rowwise().sum() / num_vertices).replicate(1, num_vertices)).cwiseAbs().rowwise().maxCoeff().squaredNorm() / num_subjects);
+	}
+
 	print_line(vformat("The number of bones %d", bone_name.size()));
+	for (int s = 0; s < num_subjects; s++) {
+		MatrixX local_rotations;
+		MatrixX local_translations;
+		MatrixX gb;
+		MatrixX local_bind_pose_rotation;
+		MatrixX local_bind_pose_translation;
+		bool degree_rot = true;
+		DemBonesExt<_Scalar, _AniMeshScalar>::computeRTB(s, local_rotations, local_translations, gb, local_bind_pose_rotation, local_bind_pose_translation, degree_rot);
+		// if (needCreateJoints) {
+		// 	exporter.createJoints(model.boneName, model.parent, radius);
+		// }
+		// exporter.setJoints(model.boneName, model.fTime.segment(model.fStart(s), model.fStart(s + 1) - model.fStart(s)), lr, lt, lbr, lbt);
+		// exporter.setSkinCluster(model.boneName, model.w, gb);
+	}
+	// model.w=(wd/model.nS).sparseView(1, 1e-20);
+	// model.lockW/=(double)model.nS;
+	// if (!hasKeyFrame) model.m.resize(0, 0);
+
+	// msg(1, "    "<<model.nV<<" vertices");
+	// if (model.nB!=0) msg(1, ", "<<model.nB<<" joints found");
+	// if (hasKeyFrame) msg(1, ", key frames found");
+	// if (model.w.size()!=0) msg(1, ", skinning weights found");
+	// msg(1, "\n");
 	return p_mesh;
 }
 } // namespace Dem
