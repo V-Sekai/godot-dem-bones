@@ -8,8 +8,8 @@
 
 #include "DemBones.h"
 
-#include <stdint.h>
 #include "thirdparty/eigen/Eigen/Eigen/Geometry"
+#include <stdint.h>
 
 #ifndef DEM_BONES_MAT_BLOCKS
 #include "MatBlocks.h"
@@ -109,6 +109,10 @@ public:
 	//! group joints
 	int bind_update;
 
+	int patience = 3;
+
+	double tolerance = 1e-3;
+
 	/** @brief Constructor and setting default parameters
 	 */
 	DemBonesExt();
@@ -150,6 +154,8 @@ public:
 			MatrixX &r_local_bind_pose_translation, bool degreeRot = true);
 
 private:
+	void compute();
+
 	/** p-norm centroids (using #transAffineNorm) and rotations to identity
 		  @param s is the subject index
 		  @param b is the [4, 4*#num_bones] by-reference output global bind matrices,
@@ -351,6 +357,30 @@ int Dem::DemBonesExt<_Scalar, _AniMeshScalar>::compute_root() {
 }
 
 template <class _Scalar, class _AniMeshScalar>
+void Dem::DemBonesExt<_Scalar, _AniMeshScalar>::compute() {
+	int np = patience;
+	double prevErr = -1;
+	DemBones<_Scalar, _AniMeshScalar>::init();
+	for (int32_t iteration_i = 0; iteration_i < DemBonesExt<_Scalar, _AniMeshScalar>::nIters; iteration_i++) {
+		DemBonesExt<_Scalar, _AniMeshScalar>::computeTranformations();
+		DemBonesExt<_Scalar, _AniMeshScalar>::computeWeights();
+		double err = DemBonesExt<_Scalar, _AniMeshScalar>::rmse();
+		if ((err < prevErr * (1 + weightEps)) &&
+				((prevErr - err) < DemBonesExt<_Scalar, _AniMeshScalar>::tolerance * prevErr)) {
+			np--;
+			if (np == 0) {
+				print_line("Convergence has been reached.");
+				break;
+			}
+		} else {
+			np = patience;
+		}
+		prevErr = err;
+		print_line("Root mean square error is " + rtos(prevErr));
+	}
+}
+
+template <class _Scalar, class _AniMeshScalar>
 void Dem::DemBonesExt<_Scalar, _AniMeshScalar>::to_rot(const Matrix3 &p_basis, Vector3 &r_input_euler, const Eigen::Vector3i &p_rotation_order, _Scalar p_epsilon /*= _Scalar(1e-10)*/) {
 	Vector3 r0 = p_basis.eulerAngles(p_rotation_order(2), p_rotation_order(1), p_rotation_order(0)).reverse();
 	_Scalar gMin = (r0 - r_input_euler).squaredNorm();
@@ -506,19 +536,13 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 		fv[index_i / indices_in_tri] = polygon_indices;
 	}
 
-	PackedInt32Array bones = p_mesh[Mesh::ARRAY_BONES];
-	RBSet<int32_t> bone_set;
+	// PackedInt32Array bones = p_mesh[Mesh::ARRAY_BONES];
+	// RBSet<int32_t> bone_set;
 
-	for (int32_t bones_i = 0; bones_i < bones.size(); bones_i++) {
-		bone_set.insert(bones[bones_i]);
-	}
-	nnz = 8;
-	const int iteration_max = 100;
-	double tolerance = 1e-3;
-	int patience = 3;
-	num_bones = 1024;
-	double prevErr = -1;
-	int np = 3;
+	// for (int32_t bones_i = 0; bones_i < bones.size(); bones_i++) {
+	// 	bone_set.insert(bones[bones_i]);
+	// }
+	nnz = 4;
 	bind_update = 2;
 	MatrixX local_rotations;
 	MatrixX local_translations;
@@ -526,22 +550,10 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	MatrixX local_bind_pose_rotation;
 	MatrixX local_bind_pose_translation;
 	bool degree_rot = true;
+	num_bones = 256;
+	nInitIters = 10;
+	nIters = 100;
 	DemBonesExt<_Scalar, _AniMeshScalar>::compute();
-	for (int32_t iteration_i = 0; iteration_i < iteration_max; iteration_i++) {
-		double err = DemBonesExt<_Scalar, _AniMeshScalar>::rmse();
-		if ((err < prevErr * (1 + weightEps)) &&
-				((prevErr - err) < tolerance * prevErr)) {
-			np--;
-			if (np == 0) {
-				print_line("Convergence has been reached.");
-				break;
-			}
-		} else {
-			np = patience;
-		}
-		prevErr = err;
-		print_line("Root mean square error is " + itos(prevErr));
-	}
 	DemBonesExt<_Scalar, _AniMeshScalar>::computeRTB(0, local_rotations, local_translations, gb, local_bind_pose_rotation, local_bind_pose_translation, degree_rot);
 	return p_mesh;
 }
