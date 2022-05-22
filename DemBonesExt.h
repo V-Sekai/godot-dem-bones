@@ -231,15 +231,19 @@ void Dem::DemBonesExt<_Scalar, _AniMeshScalar>::computeRTB(int s, MatrixX &r_loc
 			int root = compute_root();
 			parent = Eigen::VectorXi::Constant(num_bones, root);
 			parent(root) = -1;
-		} else
+		} else {
 			parent = Eigen::VectorXi::Constant(num_bones, -1);
+		}
 	}
-	if (pre_mult_inv.size() == 0)
+	if (pre_mult_inv.size() == 0) {
 		pre_mult_inv = MatrixX::Identity(4, 4).replicate(num_subjects, num_bones);
-	if (rot_order.size() == 0)
+	}
+	if (rot_order.size() == 0) {
 		rot_order = Eigen::Vector3i(0, 1, 2).replicate(num_subjects, num_bones);
-	if (orient.size() == 0)
+	}
+	if (orient.size() == 0) {
 		orient = MatrixX::Zero(3 * num_subjects, num_bones);
+	}
 
 	int nFs = frame_start_index(s + 1) - frame_start_index(s);
 	r_local_rotations.resize(nFs * 3, num_bones);
@@ -249,7 +253,7 @@ void Dem::DemBonesExt<_Scalar, _AniMeshScalar>::computeRTB(int s, MatrixX &r_loc
 
 	// #pragma omp parallel for
 	for (int bone_i = 0; bone_i < num_bones; bone_i++) {
-		Eigen::Vector3i ro = rotOrder.col(j).template segment<3>(s * 3);
+		Eigen::Vector3i ro = this->rotOrder.col(this->j).template segment<3>(s * 3);
 
 		Vector3 ov = orient.vec3(s, bone_i) * EIGEN_PI / 180;
 		Matrix3 invOM =
@@ -259,11 +263,12 @@ void Dem::DemBonesExt<_Scalar, _AniMeshScalar>::computeRTB(int s, MatrixX &r_loc
 		invOM.transposeInPlace();
 
 		Matrix4 lb;
-		if (parent(bone_i) == -1)
+		if (parent(bone_i) == -1) {
 			lb = pre_mult_inv.blk4(s, bone_i) * gb.blk4(0, bone_i);
-		else
+		} else {
 			lb = pre_mult_inv.blk4(s, bone_i) * gb.blk4(0, parent(bone_i)).inverse() *
 				 gb.blk4(0, bone_i);
+		}
 
 		Vector3 curRot = Vector3::Zero();
 		to_rot(invOM * lb.template topLeftCorner<3, 3>(), curRot, ro);
@@ -272,13 +277,14 @@ void Dem::DemBonesExt<_Scalar, _AniMeshScalar>::computeRTB(int s, MatrixX &r_loc
 
 		Matrix4 _lm;
 		for (int k = 0; k < nFs; k++) {
-			if (parent(bone_i) == -1)
+			if (parent(bone_i) == -1) {
 				_lm = pre_mult_inv.blk4(s, bone_i) * bone_transform_mat.blk4(k + frame_start_index(s), bone_i) * gb.blk4(0, bone_i);
-			else
+			} else {
 				_lm = pre_mult_inv.blk4(s, bone_i) *
 					  (bone_transform_mat.blk4(k + frame_start_index(s), parent(bone_i)) * gb.blk4(0, parent(bone_i)))
 							  .inverse() *
 					  bone_transform_mat.blk4(k + frame_start_index(s), bone_i) * gb.blk4(0, bone_i);
+			}
 			to_rot(invOM * _lm.template topLeftCorner<3, 3>(), curRot, ro);
 			r_local_rotations.vec3(k, bone_i) = curRot;
 			r_local_translations.vec3(k, bone_i) = _lm.template topRightCorner<3, 1>();
@@ -330,11 +336,13 @@ int Dem::DemBonesExt<_Scalar, _AniMeshScalar>::compute_root() {
 	// #pragma omp parallel for
 	for (int j = 0; j < num_bones; j++) {
 		double ej = 0;
-		for (int i = 0; i < num_vertices; i++)
-			for (int k = 0; k < num_total_frames; k++)
+		for (int i = 0; i < num_vertices; i++) {
+			for (int k = 0; k < num_total_frames; k++) {
 				ej += (bone_transform_mat.rotMat(k, j) * rest_pose_geometry.vec3(frame_subject_id(k), i) + bone_transform_mat.transVec(k, j) -
 						vertex.vec3(k, i).template cast<_Scalar>())
 							  .squaredNorm();
+			}
+		}
 		err(j) = ej;
 	}
 	int rj;
@@ -349,14 +357,14 @@ void Dem::DemBonesExt<_Scalar, _AniMeshScalar>::to_rot(const Matrix3 &p_basis, V
 	Vector3 rMin = r0;
 	Vector3 r;
 	Matrix3 tmpMat;
-	for (int fx = -1; fx <= 1; fx += 2)
+	for (int fx = -1; fx <= 1; fx += 2) {
 		for (_Scalar sx = -2 * EIGEN_PI; sx < 2.1 * EIGEN_PI; sx += EIGEN_PI) {
 			r(0) = fx * r0(0) + sx;
-			for (int fy = -1; fy <= 1; fy += 2)
+			for (int fy = -1; fy <= 1; fy += 2) {
 				for (_Scalar sy = -2 * EIGEN_PI; sy < 2.1 * EIGEN_PI;
 						sy += EIGEN_PI) {
 					r(1) = fy * r0(1) + sy;
-					for (int fz = -1; fz <= 1; fz += 2)
+					for (int fz = -1; fz <= 1; fz += 2) {
 						for (_Scalar sz = -2 * EIGEN_PI; sz < 2.1 * EIGEN_PI;
 								sz += EIGEN_PI) {
 							r(2) = fz * r0(2) + sz;
@@ -373,8 +381,11 @@ void Dem::DemBonesExt<_Scalar, _AniMeshScalar>::to_rot(const Matrix3 &p_basis, V
 								}
 							}
 						}
+					}
 				}
+			}
 		}
+	}
 	r_input_euler = rMin;
 }
 
@@ -395,10 +406,10 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 	HashMap<StringName, Vector<TKey<TransformKey>>> transforms;
 	HashMap<StringName, Vector<TKey<BlendKey>>> blends;
 	float FPS = 30.0f;
-	// TODO: Optimize
 	for (int32_t track_i = 0; track_i < anim->get_track_count(); track_i++) {
 		String track_path = anim->track_get_path(track_i);
 		Animation::TrackType track_type = anim->track_get_type(track_i);
+		/* 
 		if (track_type == Animation::TYPE_POSITION_3D) {
 			const double increment = 1.0 / FPS;
 			double time = 0.0;
@@ -436,7 +447,8 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 				}
 				transforms.insert(track_path, transform_anims);
 			}
-		} else if (track_type == Animation::TYPE_VALUE) {
+		} else */
+		if (track_type == Animation::TYPE_VALUE) {
 			const double increment = 1.0 / FPS;
 			double time = 0.0;
 			double length = anim->get_length();
@@ -551,7 +563,7 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert(Array p_mesh, Array p_b
 	}
 
 	PackedInt32Array bones = p_mesh[Mesh::ARRAY_BONES];
-	Set<int32_t> bone_set;
+	RBSet<int32_t> bone_set;
 
 	for (int32_t bones_i = 0; bones_i < bones.size(); bones_i++) {
 		bone_set.insert(bones[bones_i]);
