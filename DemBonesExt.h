@@ -438,26 +438,17 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 		if (track_type != Animation::TYPE_BLEND_SHAPE) {
 			continue;
 		}
-		float weight = 0.0f;
 		const double increment = 1.0 / FPS;
 		double time = 0.0;
 		double length = anim->get_length();
 		bool last = false;
-		while (true) {
+		for (int32_t frame_i = 0; frame_i < new_frames; frame_i++) {
+			float weight = 0.0f;
 			if (anim->blend_shape_track_interpolate(track_i, time, &weight) != OK) {
 				continue;
 			}
-			int32_t frame = time / FPS;
-			for (int32_t vertex_i = 0; vertex_i < p_vertex_array.size(); vertex_i++) {
-				blends.write[frame].write[vertex_i] = blends[frame][vertex_i].lerp(p_blends[track_path][vertex_i], weight);
-			}
-			time += increment;
-			if (last) {
-				break;
-			}
-			if (time >= length) {
-				last = true;
-				time = length;
+			for (int32_t vertex_i = 0; vertex_i < p_blends[track_path].size(); vertex_i++) {
+				blends.write[frame_i].write[vertex_i] = blends[frame_i][vertex_i].lerp(p_blends[track_path][vertex_i], weight);
 			}
 		}
 	}
@@ -467,9 +458,9 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	num_subjects = 1;
 	num_total_frames = FPS * anim->get_length();
 	fTime.resize(num_total_frames);
-	frame_start_index.resize(num_total_frames);
-	for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
-		frame_start_index[frame_i] = 1; // TODO: fire 2022-05-22 Support different start frame
+	frame_start_index.resize(num_subjects + 1);
+	for (int32_t subjects_i = 0; subjects_i < num_subjects; subjects_i++) {
+		frame_start_index[subjects_i] = 1; // TODO: fire 2022-05-22 Support different start frame
 	}
 	vertex.resize(3 * num_total_frames, num_vertices);
 	for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
