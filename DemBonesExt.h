@@ -544,10 +544,10 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	// model.lockW/=(double)model.nS;
 	// if (!hasKeyFrame) model.m.resize(0, 0);
 
-	print_line(vformat("Number of vertices %x", num_vertices));
-	print_line(vformat("Number of joints %x", num_bones));
-	print_line(vformat("Number of frames %x", num_total_frames));
-	print_line(vformat("Number of skinning weights %x", skinning_weights.size()));
+	print_line(vformat("Number of vertices %d", num_vertices));
+	print_line(vformat("Number of joints %d", num_bones));
+	print_line(vformat("Number of frames %d", num_total_frames));
+	print_line(vformat("Number of skinning weights %d", skinning_weights.size()));
 	return p_mesh;
 }
 } // namespace Dem
