@@ -514,7 +514,7 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	DemBonesExt<_Scalar, _AniMeshScalar>::init();
 	DemBonesExt<_Scalar, _AniMeshScalar>::compute();
 	bool needCreateJoints = (bone_name.size() == 0);
-	// double radius;
+	double radius;
 	if (needCreateJoints) {
 		bone_name.resize(num_bones);
 		for (int j = 0; j < num_bones; j++) {
@@ -522,7 +522,7 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 			s << "joint" << j;
 			bone_name[j] = s.str();
 		}
-		// radius = sqrt((rest_pose_geometry - (rest_pose_geometry.rowwise().sum() / num_vertices).replicate(1, num_vertices)).cwiseAbs().rowwise().maxCoeff().squaredNorm() / num_subjects);
+		radius = sqrt((rest_pose_geometry - (rest_pose_geometry.rowwise().sum() / num_vertices).replicate(1, num_vertices)).cwiseAbs().rowwise().maxCoeff().squaredNorm() / num_subjects);
 	}
 
 	print_line(vformat("The number of bones %d", bone_name.size()));
