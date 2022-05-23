@@ -459,23 +459,31 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	num_total_frames = FPS * anim->get_length();
 	fTime.resize(num_total_frames);
 	frame_start_index.resize(num_subjects + 1);
-	for (int32_t subjects_i = 0; subjects_i < num_subjects; subjects_i++) {
-		frame_start_index[subjects_i] = 1; // TODO: fire 2022-05-22 Support different start frame
+	frame_start_index(0) = 0;
+	for (int s = 0; s < num_subjects; s++) {
+		for (int32_t subjects_i = 0; subjects_i < num_subjects; subjects_i++) {
+			frame_start_index[s + 1] = frame_start_index[s] + num_total_frames; // TODO: fire 2022-05-22 Support different start frame
+		}
 	}
+
+	frame_subject_id.resize(num_total_frames);
+	for (int s = 0; s < num_subjects; s++) {
+		for (int k = frame_start_index(s); k < frame_start_index(s + 1); k++) {
+			frame_subject_id[k] = s;
+		}
+	}
+
 	vertex.resize(3 * num_total_frames, num_vertices);
 	for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
 		for (int32_t vertex_i = 0; vertex_i < blends[frame_i].size(); vertex_i++) {
 			const float &x = blends[frame_i][vertex_i].x;
 			const float &y = blends[frame_i][vertex_i].y;
 			const float &z = blends[frame_i][vertex_i].z;
-			vertex.col(vertex_i).segment(frame_i, 3) << x, y, z;
+			fTime[frame_i] = double(frame_i * 1.0 / FPS);
+			vertex.col(vertex_i).segment(frame_i * 3, 3) << x, y, z;
 		}
 	}
 
-	frame_subject_id.resize(num_total_frames);
-	for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
-		frame_subject_id[frame_i] = 1; // TODO: fire 2022-05-22 Support multiple animations
-	}
 	PackedInt32Array indices = p_mesh[Mesh::ARRAY_INDEX];
 
 	// Assume the mesh is a triangle mesh.
@@ -536,11 +544,10 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	// model.lockW/=(double)model.nS;
 	// if (!hasKeyFrame) model.m.resize(0, 0);
 
-	// msg(1, "    "<<model.nV<<" vertices");
-	// if (model.nB!=0) msg(1, ", "<<model.nB<<" joints found");
-	// if (hasKeyFrame) msg(1, ", key frames found");
-	// if (model.w.size()!=0) msg(1, ", skinning weights found");
-	// msg(1, "\n");
+	print_line(vformat("Number of vertices %x", num_vertices));
+	print_line(vformat("Number of joints %x", num_bones));
+	print_line(vformat("Number of frames %x", num_total_frames));
+	print_line(vformat("Number of skinning weights %x", skinning_weights.size()));
 	return p_mesh;
 }
 } // namespace Dem
