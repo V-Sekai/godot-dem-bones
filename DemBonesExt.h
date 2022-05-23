@@ -336,9 +336,9 @@ int Dem::DemBonesExt<_Scalar, _AniMeshScalar>::compute_root() {
 	for (int j = 0; j < num_bones; j++) {
 		double ej = 0;
 		for (int i = 0; i < num_vertices; i++) {
-			for (int k = 0; k < num_total_frames; k++) {
-				ej += (bone_transform_mat.rotMat(k, j) * rest_pose_geometry.vec3(frame_subject_id(k), i) + bone_transform_mat.transVec(k, j) -
-						vertex.vec3(k, i).template cast<_Scalar>())
+			for (int frame_i = 0; frame_i < num_total_frames; frame_i++) {
+				ej += (bone_transform_mat.rotMat(frame_i, j) * rest_pose_geometry.vec3(frame_subject_id(frame_i), i) + bone_transform_mat.transVec(frame_i, j) -
+						vertex.vec3(frame_i, i).template cast<_Scalar>())
 							  .squaredNorm();
 			}
 		}
@@ -448,7 +448,7 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 				continue;
 			}
 			int32_t frame = time / FPS;
-			for (int32_t vertex_i = p_vertex_array.size(); vertex_i < p_vertex_array.size(); vertex_i++) {
+			for (int32_t vertex_i = 0; vertex_i < p_vertex_array.size(); vertex_i++) {
 				blends.write[frame].write[vertex_i] = blends[frame][vertex_i].lerp(p_blends[track_path][vertex_i], weight);
 			}
 			time += increment;
@@ -463,6 +463,14 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	}
 	num_total_frames = p_vertex_array.size();
 	num_vertices = p_vertex_array.size();
+
+	num_subjects = 1;
+	num_total_frames = FPS * anim->get_length();
+	fTime.resize(num_total_frames);
+	frame_start_index.resize(num_total_frames);
+	for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
+		frame_start_index[frame_i] = 1; // TODO: fire 2022-05-22 Support different start frame
+	}
 	vertex.resize(3 * num_total_frames, num_vertices);
 	for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
 		for (int32_t vertex_i = 0; vertex_i < blends[frame_i].size(); vertex_i++) {
@@ -473,21 +481,9 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 		}
 	}
 
-	num_subjects = 1;
-	num_total_frames = FPS * anim->get_length();
-	fTime.resize(num_total_frames);
-	frame_start_index.resize(num_subjects + 1);
-	frame_start_index(0) = 0;
-
-	for (int s = 0; s < num_subjects; s++) {
-		frame_start_index(s + 1) = 0; // TODO: fire 2022-05-22 Support different start frame
-	}
-
 	frame_subject_id.resize(num_total_frames);
-	for (int subject_i = 0; subject_i < num_subjects; subject_i++) {
-		for (int frame_i = frame_start_index(subject_i); frame_i < frame_start_index(subject_i + 1); frame_i++) {
-			frame_subject_id(frame_i) = 0; // TODO: fire 2022-05-22 Support multiple animations
-		}
+	for (int32_t frame_i = 0; frame_i < num_total_frames; frame_i++) {
+		frame_subject_id[frame_i] = 1; // TODO: fire 2022-05-22 Support multiple animations
 	}
 	PackedInt32Array indices = p_mesh[Mesh::ARRAY_INDEX];
 
@@ -502,6 +498,8 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 		polygon_indices[2] = indices[index_i / 3 + 2];
 		fv[index_i / 3] = polygon_indices;
 	}
+	// TODO: fire 2022-05-22 subjects > 1;
+	rest_pose_geometry.resize(3, num_vertices);
 	for (int32_t vertex_i = 0; vertex_i < p_vertex_array.size();
 			vertex_i++) {
 		float pos_x = p_vertex_array[vertex_i].x;
@@ -511,7 +509,7 @@ Array Dem::DemBonesExt<_Scalar, _AniMeshScalar>::convert_blend_shapes_without_bo
 	}
 	nnz = 4;
 	bind_update = 2;
-	nIters = 10;
+	nIters = 100;
 	num_bones = 20;
 	nInitIters = 20;
 	DemBonesExt<_Scalar, _AniMeshScalar>::init();

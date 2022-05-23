@@ -590,15 +590,18 @@ private:
 	void computeTransFromLabel() {
 		bone_transform_mat = Matrix4::Identity().replicate(num_total_frames, num_bones);
 		// #pragma omp parallel for
-		for (int k = 0; k < num_total_frames; k++) {
+		for (int frame_i = 0; frame_i < num_total_frames; frame_i++) {
 			MatrixX qpT = MatrixX::Zero(4, 4 * num_bones);
-			for (int i = 0; i < num_vertices; i++)
-				if (label(i) != -1)
-					qpT.blk4(0, label(i)) +=
-							Vector4(vertex.vec3(k, i).template cast<_Scalar>().homogeneous()) *
-							rest_pose_geometry.vec3(frame_subject_id(k), i).homogeneous().transpose();
-			for (int j = 0; j < num_bones; j++)
-				qpT2m(qpT.blk4(0, j), k, j);
+			for (int vertex_i = 0; vertex_i < num_vertices; vertex_i++) {
+				if (label(vertex_i) != -1) {
+					int32_t subject = frame_subject_id(frame_i);
+					qpT.blk4(0, label(vertex_i)) += Vector4(vertex.vec3(frame_i, vertex_i).template cast<_Scalar>().homogeneous()) *
+							rest_pose_geometry.vec3(subject, vertex_i).homogeneous().transpose();
+				}
+			}
+			for (int bone_i = 0; bone_i < num_bones; bone_i++) {
+				qpT2m(qpT.blk4(0, bone_i), frame_i, bone_i);
+			}
 		}
 	}
 
