@@ -31,15 +31,16 @@
 #ifndef BAKE_BLEND_SHAPES_PLUGIN_H
 #define BAKE_BLEND_SHAPES_PLUGIN_H
 
+#include "scene/gui/file_dialog.h"
 #ifdef TOOLS_ENABLED
 #include "editor/editor_plugin.h"
 
 class BakeBlendShapesPlugin : public EditorPlugin {
 	GDCLASS(BakeBlendShapesPlugin, EditorPlugin);
 
-	EditorFileDialog *file_export_lib = nullptr;
+	FileDialog *file_export_lib = nullptr;
 	void _gltf2_dialog_action(String p_file);
-	void convert_scene_to_gltf2();
+	void convert_scene_to_bake_blend_shapes();
 
 public:
 	virtual String get_name() const override;
